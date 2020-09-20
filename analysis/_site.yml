@@ -1,7 +1,7 @@
-name: "stat599-creative-component"
+name: stat599-creative-component
 output_dir: ../docs
 navbar:
-  title: "stat599-creative-component"
+  title: stat599-creative-component
   left:
   - text: Home
     href: index.html
@@ -9,6 +9,10 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  right:
+  - icon: fa-github
+    text: Source code
+    href: https://github.com/ashirwad/stat599-creative-component
 output:
   workflowr::wflow_html:
     toc: yes
