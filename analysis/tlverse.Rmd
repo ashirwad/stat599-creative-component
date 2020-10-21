@@ -1,0 +1,23 @@
+---
+title: "Untitled"
+author: "Ashirwad Barnwal"
+date: "10/21/2020"
+output: html_document
+---
+
+# Getting setup
+Define setup chunk:
+
+```{r setup, message = FALSE}
+# Elegant handling of namespace conflicts
+library(conflicted)
+
+# Core tidyverse
+library(tidyverse)
+
+# Model building & evaluation
+library(sl3)
+library(origami)
+library(ROCR)
+```
+
