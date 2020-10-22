@@ -19,5 +19,39 @@ library(tidyverse)
 library(sl3)
 library(origami)
 library(ROCR)
+
+# Pretty tables
+library(summarytools)
 ```
+
+Include `summarytools`' *css*:
+
+```{r st-css, results = "asis"}
+st_css()
+```
+
+# Think a heading
+
+## International Stroke Trial (IST) data
+Import IST data:
+
+```{r}
+ist_sample <- read_csv(
+  "https://raw.githubusercontent.com/tlverse/tlverse-handbook/master/data/ist_sample.csv"
+)
+glimpse(ist_sample)
+```
+
+## Study design recap
+Here's a quick recap of the study design:
+
+```{r subj-count-by-treatment}
+(subj_count_by_treatment <- ist_sample %>%
+  mutate(across(c(RXASP, RXHEP), as.factor)) %$%
+  ctable(RXASP, RXHEP) %>%
+  print(method = "render"))
+```
+
+
+
 
