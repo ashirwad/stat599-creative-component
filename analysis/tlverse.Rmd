@@ -52,6 +52,71 @@ Here's a quick recap of the study design:
   print(method = "render"))
 ```
 
+# Build prediction models
+
+## Machine learning task
+Define a machine learning task:
+
+```{r ml-task}
+(ml_task <- make_sl3_Task(
+  data = ist_sample, 
+  covariates = colnames(ist_sample)[!colnames(ist_sample) == "DRSISC"],
+  outcome = "DRSISC",
+  drop_missing_outcome = TRUE
+))
+```
+
+## Learner library
+Define learners to fit different machine learning algorithms:
+
+```{r learner-library}
+lrnr_glm <- Lrnr_glm$new()
+lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
+lrnr_ridge <- Lrnr_glmnet$new(alpha = 0)
+lrnr_enet <- Lrnr_glmnet$new(alpha = 0.5)
+lrnr_mean <- Lrnr_mean$new()
+lrnr_ranger <- Lrnr_ranger$new()
+lrnr_svm <- Lrnr_svm$new()
+```
+
+Handle xgboost separately:
+
+```{r xgb-learners}
+xgb_grid <- expand_grid(max_depth = c(2, 5, 8), eta = c(0.01, 0.15, 0.3))
+params_default <- list(nthread = getOption("sl.cores.learners", 1))
+
+xgb_learners <- apply(
+  xgb_grid, MARGIN = 1, function(params_tune) {
+    do.call(Lrnr_xgboost$new, c(params_default, as.list(params_tune)))
+  }
+)
+```
+
+Combine all learners:
+
+```{r learners}
+learners <- list(
+  lrnr_glm, lrnr_lasso, lrnr_ridge, lrnr_enet, lrnr_mean, lrnr_ranger, lrnr_svm,
+  xgb_learners
+) %>%
+  unlist()
+```
+
+## Model fitting
+Define a super learner and train the model:
+
+```{r sl-fit}
+sl <- Lrnr_sl$new(learners)
+sl_fit <- sl$train(ml_task)
+```
+
+
+
+
+
+
+
+
 
 
 
