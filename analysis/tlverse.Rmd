@@ -5,10 +5,17 @@ date: "10/21/2020"
 output: html_document
 ---
 
+```{r before-doc, cache = FALSE}
+knitr::opts_chunk$set(
+  cache = TRUE, 
+  autodep = TRUE
+)
+```
+
 # Getting setup
 Define setup chunk:
 
-```{r setup, message = FALSE, warning = FALSE}
+```{r setup, message = FALSE, warning = FALSE, cache = FALSE}
 # Elegant handling of namespace conflicts
 library(conflicted)
 
@@ -189,6 +196,50 @@ View data summary:
 ```{r ist-fdead-asp-mhep-smry, results = "asis"}
 pull_entry(ist_fdead_smry, "yes_asp_med_hep", "df_summary") %>%
   print(max.tbl.height = 600, method = "render")
+```
+
+## Model specification {.tabset}
+
+### Random forest
+Specify a random forest model:
+
+```{r rf-spec}
+rf_spec <- rand_forest(
+  mtry = tune(),
+  trees = 500,
+  min_n = tune()
+) %>%
+  set_mode("classification") %>%
+  set_engine("ranger")
+rf_spec
+```
+
+### Neural network
+Specify a neural network model:
+
+```{r nnet-spec}
+nnet_spec <- mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("nnet")
+nnet_spec
+```
+
+### XGBoost
+Specify an XGBoost model:
+
+```{r xgb-spec}
+xgb_spec <- boost_tree(
+  mtry = tune(),
+  trees = 1000,
+  min_n = tune(),
+  tree_depth = tune(),
+  learn_rate = tune(),
+  loss_reduction = tune(),
+  sample_size = tune()
+) %>%
+  set_mode("classification") %>%
+  set_engine("xgboost")
+xgb_spec
 ```
 
 
