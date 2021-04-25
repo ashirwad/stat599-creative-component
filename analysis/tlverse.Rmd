@@ -198,6 +198,23 @@ pull_entry(ist_fdead_smry, "yes_asp_med_hep", "df_summary") %>%
   print(max.tbl.height = 600, method = "render")
 ```
 
+## Data partitioning
+Create data partitions:
+
+```{r ist-splits}
+# For reproducible results
+set.seed(123)
+
+# Data partitions
+ist_fdead_nasp_nhep <- pull_entry(ist_fdead, "no_asp_no_hep", "data") %>%
+  mutate(across(where(is.character), as.factor))
+ist_split <- initial_split(ist_fdead_nasp_nhep, strata = FDEAD)
+ist_train <- training(ist_split)
+ist_test <- testing(ist_split)
+
+ist_folds <- vfold_cv(ist_train, v = 5)
+```
+
 ## Model specification {.tabset}
 
 ### Random forest
@@ -241,6 +258,16 @@ xgb_spec <- boost_tree(
   set_engine("xgboost")
 xgb_spec
 ```
+
+## Feature engineering
+Define a recipe for feature engineering:
+
+```{r base-rec}
+base_rec <- recipe(FDEAD ~ ., data = ist_train) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+base_rec
+```
+
 
 
 
