@@ -12,22 +12,184 @@ Define setup chunk:
 # Elegant handling of namespace conflicts
 library(conflicted)
 
+# Miscellaneous
+library(default)
+
 # Path & data manipulation
+library(here)
 library(tidyverse)
+conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
 
 # Pretty tables
 library(summarytools)
+st_options(
+  style = "rmarkdown",
+  plain.ascii = FALSE,
+  footnote = NA,
+  dfSummary.style = "grid",
+  dfSummary.valid.col = FALSE,
+  dfSummary.graph.magnif = 0.75,
+  tmp.img.dir = "/img",
+  subtitle.emphasis = FALSE
+)
+
+# My functions
+pull_entry <- function(in_data, trt_type, col_name) {
+  in_data %>%
+    filter(treatment == trt_type) %>%
+    pluck(col_name, 1)
+}
 ```
 
-```{r st-css, echo = FALSE}
+```{r st-css, echo = FALSE, results = "asis"}
 st_css()
 ```
 
+# International Stroke Trial (IST) data
 
+## Import data
+Import IST data:
 
+```{r ist-raw, message = FALSE, warning = FALSE}
+ist_raw <- read_csv(here("data", "IST_corrected.csv"))
+glimpse(ist_raw)
+```
+
+## Subset data {.tabset}
+Create a subset of IST data for model building:
+
+```{r ist}
+ist <- ist_raw %>%
+  select(RDELAY:STYPE, RXASP, RXHEP, FDEAD) %>%
+  mutate(
+    RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
+    treatment = case_when(
+      RXASP == "N" & RXHEP == "N" ~ "no_asp_no_hep",
+      RXASP == "N" & RXHEP == "L" ~ "no_asp_low_hep",
+      RXASP == "N" & RXHEP == "M" ~ "no_asp_med_hep",
+      RXASP == "Y" & RXHEP == "N" ~ "yes_asp_no_hep",
+      RXASP == "Y" & RXHEP == "L" ~ "yes_asp_low_hep",
+      RXASP == "Y" & RXHEP == "M" ~ "yes_asp_med_hep"
+    )
+  ) %>%
+  select(-RXASP, -RXHEP)
+glimpse(ist)
+```
+
+Create six data frames, one for each treatment group:
+
+```{r ist-fdead}
+ist_fdead <- ist %>%
+  filter(FDEAD != "U") %>%
+  drop_na(RATRIAL, FDEAD) %>%
+  group_by(treatment) %>%
+  nest() %>%
+  ungroup()
+glimpse(ist_fdead)
+```
+
+Generate descriptive summaries for data corresponding to each treatment group:
+
+```{r ist-fdead-smry, message = FALSE}
+ist_fdead_smry <- ist_fdead %>%
+  mutate(
+    df_summary = map(data, ~ dfSummary(.x))
+  )
+glimpse(ist_fdead_smry)
+```
+
+### Treatment A: No aspirin, no heparin
+Glimpse data:
+
+```{r ist-fdead-nasp-nhep}
+pull_entry(ist_fdead, "no_asp_no_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-nasp-nhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "no_asp_no_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
+
+### Treatment B: No aspirin, low heparin
+Glimpse data:
+
+```{r ist-fdead-nasp-lhep}
+pull_entry(ist_fdead, "no_asp_low_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-nasp-lhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "no_asp_low_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
+
+### Treatment C: No aspirin, medium heparin
+Glimpse data:
+
+```{r ist-fdead-nasp-mhep}
+pull_entry(ist_fdead, "no_asp_med_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-nasp-mhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "no_asp_med_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
+
+### Treatment D: aspirin, no heparin
+Glimpse data:
+
+```{r ist-fdead-asp-nhep}
+pull_entry(ist_fdead, "yes_asp_no_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-asp-nhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "yes_asp_no_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
+
+### Treatment E: aspirin, low heparin
+Glimpse data:
+
+```{r ist-fdead-asp-lhep}
+pull_entry(ist_fdead, "yes_asp_low_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-asp-lhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "yes_asp_low_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
+
+### Treatment F: aspirin, medium heparin
+Glimpse data:
+
+```{r ist-fdead-asp-mhep}
+pull_entry(ist_fdead, "yes_asp_med_hep", "data") %>%
+  glimpse()
+```
+
+View data summary:
+
+```{r ist-fdead-asp-mhep-smry, results = "asis"}
+pull_entry(ist_fdead_smry, "yes_asp_med_hep", "df_summary") %>%
+  print(max.tbl.height = 600, method = "render")
+```
 
 
 
