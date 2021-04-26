@@ -387,3 +387,36 @@ toc()
 xgb_res
 ```
 
+## Best models {.tabset}
+Identify best models and create final model specifications:
+
+### Random forest
+Best random forest model:
+
+```{r rf-final-spec}
+rf_best_auc <- select_best(rf_res, "roc_auc")
+rf_final_spec <- finalize_model(rf_spec, rf_best_auc)
+rf_final_spec
+```
+
+### Neural network
+Best neural net model:
+
+```{r nnet-final-spec}
+nnet_best_auc <- select_best(nnet_res, "roc_auc")
+nnet_final_spec <- finalize_model(nnet_spec, nnet_best_auc)
+nnet_final_spec
+```
+
+### XGBoost
+Best XGBoost model:
+
+```{r xgb-final-spec}
+xgb_best_auc <- select_best(xgb_res, "roc_auc")
+xgb_final_spec <- finalize_model(xgb_spec, xgb_best_auc)
+xgb_final_spec
+```
+
+
+
+
