@@ -21,6 +21,8 @@ library(conflicted)
 
 # Miscellaneous
 library(default)
+library(tictoc)
+doParallel::registerDoParallel()
 
 # Path & data manipulation
 library(here)
@@ -29,6 +31,7 @@ conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
+library(stacks)
 
 # Pretty tables
 library(summarytools)
@@ -259,13 +262,25 @@ xgb_spec <- boost_tree(
 xgb_spec
 ```
 
-## Feature engineering
-Define a recipe for feature engineering:
+## Feature engineering {.tabset}
+Define recipes for feature engineering:
+
+### Dummy coding
+Create dummy variables:
 
 ```{r base-rec}
 base_rec <- recipe(FDEAD ~ ., data = ist_train) %>%
   step_dummy(all_nominal(), -all_outcomes())
 base_rec
+```
+
+### Normalization
+Center and scale numeric variables:
+
+```{r norm-rec}
+norm_rec <- base_rec %>%
+  step_normalize(all_predictors())
+norm_rec
 ```
 
 ## Modeling workflow {.tabset}
@@ -286,6 +301,7 @@ Specify a modeling workflow for neural net:
 
 ```{r nnet-wflow}
 nnet_wflow <- workflow() %>%
+  add_recipe(norm_rec) %>%
   add_model(nnet_spec)
 nnet_wflow
 ```
@@ -300,5 +316,74 @@ xgb_wflow <- workflow() %>%
 xgb_wflow
 ```
 
+## Model tuning {.tabset}
+Define control settings for data stacking:
 
+```{r cntrl-grid}
+cntrl_grid <- control_stack_grid()
+cntrl_grid
+```
+
+### Random forest
+Tune random forest model:
+
+```{r rf-res}
+tic()
+set.seed(345)
+rf_res <- tune_grid(
+  object = rf_wflow,
+  resamples = ist_folds,
+  grid = 10,
+  control = cntrl_grid
+)
+toc()
+rf_res
+```
+
+### Neural network
+Tune neural net model:
+
+```{r nnet-res}
+tic()
+set.seed(123)
+nnet_res <- tune_grid(
+  object = nnet_wflow,
+  resamples = ist_folds,
+  grid = 10,
+  control = cntrl_grid
+)
+toc()
+nnet_res
+```
+
+### XGBoost
+Construct parameter grid:
+
+```{r xgb-grid}
+xgb_grid <- grid_latin_hypercube(
+  min_n(),
+  tree_depth(),
+  learn_rate(),
+  loss_reduction(),
+  sample_size = sample_prop(),
+  finalize(mtry(), ist_train),
+  size = 30
+)
+xgb_grid
+```
+
+Tune XGBoost model:
+
+```{r xgb-res}
+tic()
+set.seed(123)
+xgb_res <- tune_grid(
+  object = xgb_wflow,
+  resamples = ist_folds,
+  grid = xgb_grid,
+  control = cntrl_grid
+)
+toc()
+xgb_res
+```
 
