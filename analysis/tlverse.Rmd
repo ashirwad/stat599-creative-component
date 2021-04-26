@@ -417,6 +417,37 @@ xgb_final_spec <- finalize_model(xgb_spec, xgb_best_auc)
 xgb_final_spec
 ```
 
+## Final workflows {.tabset}
+Specify final workflows:
 
+### Random forest
+Create a final workflow for fitting random forest:
+
+```{r rf-final-wflow}
+rf_final_wflow <- workflow() %>%
+  add_recipe(base_rec) %>%
+  add_model(rf_final_spec)
+rf_final_wflow
+```
+
+### Neural network
+Create a final workflow for fitting neural network:
+
+```{r nnet-final-wflow}
+nnet_final_wflow <- workflow() %>%
+  add_recipe(norm_rec) %>%
+  add_model(nnet_final_spec)
+nnet_final_wflow
+```
+
+### XGBoost
+Create a final workflow for fitting XGBoost:
+
+```{r xgb-final-wflow}
+xgb_final_wflow <- workflow() %>%
+  add_recipe(base_rec) %>%
+  add_model(xgb_final_spec)
+xgb_final_wflow
+```
 
 
