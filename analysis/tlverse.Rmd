@@ -268,6 +268,37 @@ base_rec <- recipe(FDEAD ~ ., data = ist_train) %>%
 base_rec
 ```
 
+## Modeling workflow {.tabset}
+Specify modeling workflows:
+
+### Random forest
+Specify a modeling workflow for random forest:
+
+```{r rf-wflow}
+rf_wflow <- workflow() %>%
+  add_recipe(base_rec) %>%
+  add_model(rf_spec)
+rf_wflow
+```
+
+### Neural network
+Specify a modeling workflow for neural net:
+
+```{r nnet-wflow}
+nnet_wflow <- workflow() %>%
+  add_model(nnet_spec)
+nnet_wflow
+```
+
+### XGBoost
+Specify a modeling workflow for XGBoost:
+
+```{r xgb-wflow}
+xgb_wflow <- workflow() %>%
+  add_recipe(base_rec) %>%
+  add_model(xgb_spec)
+xgb_wflow
+```
 
 
 
