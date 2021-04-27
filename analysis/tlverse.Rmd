@@ -450,4 +450,46 @@ xgb_final_wflow <- workflow() %>%
 xgb_final_wflow
 ```
 
+## Final fits {.tabset}
+Fit final best models to the training set and evaluate the test set:
+
+### Random forest
+Fit the final best random forest model to the training set and evaluate the test set:
+
+```{r rf-final-res}
+tic()
+rf_final_res <- rf_final_wflow %>%
+  last_fit(ist_split)
+toc()
+
+rf_final_res %>%
+  collect_metrics()
+```
+
+### Neural network
+Fit the final best neural network model to the training set and evaluate the test set:
+
+```{r nnet-final-res}
+tic()
+nnet_final_res <- nnet_final_wflow %>%
+  last_fit(ist_split)
+toc()
+
+nnet_final_res %>%
+  collect_metrics()
+```
+
+### XGBoost
+Fit the final best xgboost model to the training set and evaluate the test set:
+
+```{r xgb-final-res}
+tic()
+xgb_final_res <- xgb_final_wflow %>%
+  last_fit(ist_split)
+toc()
+
+xgb_final_res %>%
+  collect_metrics()
+```
+
 
