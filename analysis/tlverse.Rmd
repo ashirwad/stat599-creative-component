@@ -492,4 +492,52 @@ xgb_final_res %>%
   collect_metrics()
 ```
 
+## ROC curve {.tabset}
+
+### Random forest
+Compute the data needed to plot the ROC curve for random forest model:
+
+```{r rf-auc}
+rf_auc <- rf_final_res %>%
+  collect_predictions() %>%
+  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  mutate(model = "Random forest")
+rf_auc
+```
+
+### Neural network
+Compute the data needed to plot the ROC curve for neural network model:
+
+```{r nnet-auc}
+nnet_auc <- nnet_final_res %>%
+  collect_predictions() %>%
+  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  mutate(model = "Neural network")
+nnet_auc
+```
+
+### XGBoost
+Compute the data needed to plot the ROC curve for xgboost model:
+
+```{r xgb-auc}
+xgb_auc <- xgb_final_res %>%
+  collect_predictions() %>%
+  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  mutate(model = "XGBoost")
+xgb_auc
+```
+
+## {-}
+Compare ROC curves:
+
+```{r roc-curves}
+roc_curves <- bind_rows(rf_auc, nnet_auc, xgb_auc) %>%
+  ggplot(aes(x = 1 - specificity, y = sensitivity, col = model)) + 
+  geom_path(lwd = 1.5, alpha = 0.8) + 
+  geom_abline(lty = 3) + 
+  coord_equal() + 
+  scale_color_viridis_d(option = "plasma", end = 0.6) +
+  ggplotif
+roc_curves
+```
 
