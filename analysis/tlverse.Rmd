@@ -31,6 +31,7 @@ conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
+library(treesnip)
 library(stacks)
 
 # Pretty tables
@@ -274,6 +275,20 @@ xgb_spec <- boost_tree(
   set_mode("classification") %>%
   set_engine("xgboost")
 xgb_spec
+```
+
+### LightGBM
+Specify a lightgbm model:
+
+```{r lgbm-spec}
+lgbm_spec <- boost_tree(
+  trees = 1000,
+  min_n = tune(),
+  tree_depth = tune(),
+) %>%
+  set_mode("classification") %>%
+  set_engine("lightgbm")
+lgbm_spec
 ```
 
 ## Feature engineering {.tabset}
