@@ -524,6 +524,33 @@ tune_ist_xgb <- function(data, cntrl_grid) {
 }
 ```
 
+### LightGBM
+Construct parameter grid:
+
+```{r lgbm-grid}
+lgbm_grid <- grid_latin_hypercube(
+  min_n(),
+  tree_depth(),
+  size = 30
+)
+lgbm_grid
+```
+
+Tune lightgbm model:
+
+```{r lgbm-res}
+tic()
+set.seed(123)
+lgbm_res <- tune_grid(
+  object = lgbm_wflow,
+  resamples = ist_folds,
+  grid = lgbm_grid,
+  control = cntrl_grid
+)
+toc()
+lgbm_res
+```
+
 ## Best models {.tabset}
 Identify best models and create final model specifications:
 
