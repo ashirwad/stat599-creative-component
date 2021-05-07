@@ -294,6 +294,21 @@ lgbm_spec <- boost_tree(
 lgbm_spec
 ```
 
+### CatBoost
+Specify a catboost model:
+
+```{r catb-spec}
+catb_spec <- boost_tree(
+  trees = 1000,
+  min_n = tune(),
+  tree_depth = tune(),
+  learn_rate = tune()
+) %>%
+  set_mode("classification") %>%
+  set_engine("catboost")
+catb_spec
+```
+
 ## Feature engineering {.tabset}
 Define recipes for feature engineering:
 
