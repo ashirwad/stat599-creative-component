@@ -390,6 +390,16 @@ lgbm_wflow <- workflow() %>%
 lgbm_wflow
 ```
 
+### CatBoost
+Specify a modeling workflow for catboost:
+
+```{r catb-wflow}
+catb_wflow <- workflow() %>%
+  add_formula(FDEAD ~ .) %>%
+  add_model(catb_spec)
+catb_wflow
+```
+
 ### Helper
 Create a helper function to add modeling workflows to nested data frames:
 
