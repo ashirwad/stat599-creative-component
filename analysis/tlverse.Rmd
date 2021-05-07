@@ -691,6 +691,16 @@ xgb_final_wflow <- workflow() %>%
 xgb_final_wflow
 ```
 
+### CatBoost
+Create a final workflow for fitting catboost:
+
+```{r catb-final-wflow}
+catb_final_wflow <- workflow() %>%
+  add_formula(FDEAD ~ .) %>%
+  add_model(catb_final_spec)
+catb_final_wflow
+```
+
 ## Final fits {.tabset}
 Fit final best models to the training set and evaluate the test set:
 
