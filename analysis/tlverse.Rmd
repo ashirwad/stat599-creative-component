@@ -591,6 +591,34 @@ toc()
 lgbm_res
 ```
 
+### CatBoost
+Construct parameter grid:
+
+```{r catb-grid}
+catb_grid <- grid_latin_hypercube(
+  min_n(),
+  tree_depth(range = c(4, 10)),
+  learn_rate(),
+  size = 30
+)
+catb_grid
+```
+
+Tune catboost model:
+
+```{r catb-res}
+tic()
+set.seed(123)
+catb_res <- tune_grid(
+  object = catb_wflow,
+  resamples = ist_folds,
+  grid = catb_grid,
+  control = cntrl_grid
+)
+toc()
+catb_res
+```
+
 ## Best models {.tabset}
 Identify best models and create final model specifications:
 
