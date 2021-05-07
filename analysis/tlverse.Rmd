@@ -22,7 +22,10 @@ library(conflicted)
 # Miscellaneous
 library(default)
 library(tictoc)
-doParallel::registerDoParallel()
+library(doFuture)
+registerDoFuture()
+plan(multisession)
+# library(lightgbm)
 
 # Path & data manipulation
 library(here)
@@ -362,6 +365,16 @@ xgb_wflow <- workflow() %>%
 xgb_wflow
 ```
 
+### LightGBM
+Specify a modeling workflow for lightgbm:
+
+```{r lgbm-wflow}
+lgbm_wflow <- workflow() %>%
+  add_recipe(recipe(FDEAD ~ ., data = ist_train)) %>%
+  add_model(lgbm_spec)
+lgbm_wflow
+```
+
 ### Helper
 Create a helper function to add modeling workflows to nested data frames:
 
@@ -538,7 +551,9 @@ lgbm_grid
 
 Tune lightgbm model:
 
-```{r lgbm-res}
+```{r lgbm-res, eval = FALSE}
+# TODO: Current version of lightgbm crashes R session;
+# run this chunk when new version is available on cran
 tic()
 set.seed(123)
 lgbm_res <- tune_grid(
