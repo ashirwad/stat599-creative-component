@@ -649,6 +649,15 @@ xgb_final_spec <- finalize_model(xgb_spec, xgb_best_auc)
 xgb_final_spec
 ```
 
+### CatBoost
+Best catboost model:
+
+```{r catb-final-spec}
+catb_best_auc <- select_best(catb_res, "roc_auc")
+catb_final_spec <- finalize_model(catb_spec, catb_best_auc)
+catb_final_spec
+```
+
 ## Final workflows {.tabset}
 Specify final workflows:
 
