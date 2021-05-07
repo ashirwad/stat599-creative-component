@@ -743,6 +743,19 @@ xgb_final_res %>%
   collect_metrics()
 ```
 
+### CatBoost
+Fit the final best catboost model to the training set and evaluate the test set:
+
+```{r catb-final-res}
+tic()
+catb_final_res <- catb_final_wflow %>%
+  last_fit(ist_split)
+toc()
+
+catb_final_res %>%
+  collect_metrics()
+```
+
 ## ROC curve {.tabset}
 
 ### Random forest
