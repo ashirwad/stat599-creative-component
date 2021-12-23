@@ -212,12 +212,6 @@ xgb_wflow
 ```
 
 ## Model tuning {.tabset}
-Define control settings for data stacking:
-
-```{r cntrl-grid}
-cntrl_grid <- control_stack_grid()
-cntrl_grid
-```
 
 ### Random forest
 Tune random forest model:
@@ -228,8 +222,7 @@ set.seed(345)
 rf_res <- tune_grid(
   object = rf_wflow,
   resamples = ist_folds,
-  grid = 10,
-  control = cntrl_grid
+  grid = 10
 )
 toc()
 rf_res
@@ -244,8 +237,7 @@ set.seed(123)
 nnet_res <- tune_grid(
   object = nnet_wflow,
   resamples = ist_folds,
-  grid = 10,
-  control = cntrl_grid
+  grid = 10
 )
 toc()
 nnet_res
@@ -275,8 +267,7 @@ set.seed(123)
 xgb_res <- tune_grid(
   object = xgb_wflow,
   resamples = ist_folds,
-  grid = xgb_grid,
-  control = cntrl_grid
+  grid = xgb_grid
 )
 toc()
 xgb_res
