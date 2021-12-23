@@ -318,23 +318,6 @@ norm_rec <- base_rec %>%
 norm_rec
 ```
 
-### Helper
-Create a helper function to add recipes to nested data frames:
-
-```{r add-ist-recipe}
-add_ist_recipe <- function(data) {
-  data %>%
-    mutate(
-      base_rec = map(
-        ist_train, 
-        ~ recipe(FDEAD ~ ., data = .x) %>%
-            step_dummy(all_nominal(), -all_outcomes())
-      ),
-      norm_rec = map(base_rec, ~ .x %>% step_normalize(all_predictors()))
-    )
-}
-```
-
 ## Modeling workflow {.tabset}
 Specify modeling workflows:
 
@@ -368,26 +351,6 @@ xgb_wflow <- workflow() %>%
 xgb_wflow
 ```
 
-### Helper
-Create a helper function to add modeling workflows to nested data frames:
-
-```{r add-ist-wflow}
-add_ist_wflow <- function(data) {
-  data %>%
-    mutate(
-      rf_wflow = map2(
-        base_rec, rf_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      ),
-      nnet_wflow = map2(
-        norm_rec, nnet_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      ),
-      xgb_wflow = map2(
-        base_rec, xgb_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      )
-    )
-}
-```
-
 ## Model tuning {.tabset}
 Define control settings for data stacking:
 
@@ -412,26 +375,6 @@ toc()
 rf_res
 ```
 
-Define a function to tune random forest model for nested data frames:
-
-```{r tune-ist-rf}
-tune_ist_rf <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      rf_res = map2(
-        rf_wflow, 
-        ist_folds, 
-        ~ tune_grid(
-            object = .x,
-            resamples = .y,
-            grid = 10,
-            control = cntrl_grid
-          )
-      )
-    )
-}
-```
-
 ### Neural network
 Tune neural net model:
 
@@ -446,26 +389,6 @@ nnet_res <- tune_grid(
 )
 toc()
 nnet_res
-```
-
-Define a function to tune neural network model for nested data frames:
-
-```{r tune-ist-nnet}
-tune_ist_nnet <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      nnet_res = map2(
-        nnet_wflow, 
-        ist_folds, 
-        ~ tune_grid(
-            object = .x,
-            resamples = .y,
-            grid = 10,
-            control = cntrl_grid
-          )
-      )
-    )
-}
 ```
 
 ### XGBoost
@@ -499,37 +422,6 @@ toc()
 xgb_res
 ```
 
-Define a function to tune xgboost model for nested data frames:
-
-```{r tune-ist-xgb}
-tune_ist_xgb <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      xgb_grid = map(
-        ist_train,
-        ~ grid_latin_hypercube(
-            min_n(),
-            tree_depth(),
-            learn_rate(),
-            loss_reduction(),
-            sample_size = sample_prop(),
-            finalize(mtry(), .x),
-            size = 30
-          )
-      ),
-      xgb_res = pmap(
-        list(xgb_wflow, ist_folds, xgb_grid),
-        ~ tune_grid(
-            object = ..1,
-            resamples = ..2,
-            grid = ..3,
-            control = cntrl_grid
-          )
-      )
-    )
-}
-```
-
 ## Best models {.tabset}
 Identify best models and create final model specifications:
 
@@ -558,15 +450,6 @@ Best XGBoost model:
 xgb_best_acc <- select_best(xgb_res, "accuracy")
 xgb_final_spec <- finalize_model(xgb_spec, xgb_best_acc)
 xgb_final_spec
-```
-
-### CatBoost
-Best catboost model:
-
-```{r catb-final-spec}
-catb_best_auc <- select_best(catb_res, "roc_auc")
-catb_final_spec <- finalize_model(catb_spec, catb_best_auc)
-catb_final_spec
 ```
 
 ## Final workflows {.tabset}
