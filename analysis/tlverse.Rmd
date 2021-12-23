@@ -20,12 +20,10 @@ Define setup chunk:
 library(conflicted)
 
 # Miscellaneous
-library(default)
 library(tictoc)
 library(doFuture)
 registerDoFuture()
 plan(multisession)
-# library(lightgbm)
 
 # Path & data manipulation
 library(here)
@@ -34,32 +32,6 @@ conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
-library(treesnip)
-library(stacks)
-
-# Pretty tables
-library(summarytools)
-st_options(
-  style = "rmarkdown",
-  plain.ascii = FALSE,
-  footnote = NA,
-  dfSummary.style = "grid",
-  dfSummary.valid.col = FALSE,
-  dfSummary.graph.magnif = 0.75,
-  tmp.img.dir = "/img",
-  subtitle.emphasis = FALSE
-)
-
-# My functions
-pull_entry <- function(in_data, trt_type, col_name) {
-  in_data %>%
-    filter(treatment == trt_type) %>%
-    pluck(col_name, 1)
-}
-```
-
-```{r st-css, echo = FALSE, results = "asis"}
-st_css()
 ```
 
 # International Stroke Trial (IST) data
