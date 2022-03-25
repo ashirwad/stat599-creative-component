@@ -1,0 +1,14 @@
+---
+title: "Untitled"
+author: "Ashirwad Barnwal"
+date: '2022-03-25'
+output: html_document
+---
+
+## Import data
+Import IST data:
+
+```{r ist-raw, message = FALSE, warning = FALSE}
+ist_raw <- read_csv(here("data", "IST_corrected.csv"))
+glimpse(ist_raw)
+```
