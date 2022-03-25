@@ -32,6 +32,10 @@ conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
+
+# Model explanation
+library(DALEX)
+library(DALEXtra)
 ```
 
 # International Stroke Trial (IST) data
