@@ -54,9 +54,11 @@ ist <- ist_raw %>%
       OCCODE %in% c("dead", "dependent") ~ "yes",
       OCCODE %in% c("not_recovered", "recovered") ~ "no",
       OCCODE == "missing" ~ "missing"
-    )
+    ) %>% 
+      fct_relevel("no")
   ) %>%
-  select(-RXASP, -RXHEP, -OCCODE)
+  select(-RXASP, -RXHEP, -OCCODE) %>%
+  mutate(across(where(is.character), ~ as.factor(.x)))
 glimpse(ist)
 ```
 
