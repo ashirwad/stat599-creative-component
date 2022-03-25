@@ -5,6 +5,21 @@ date: '2022-03-25'
 output: html_document
 ---
 
+# Getting setup
+Define setup chunk:
+
+```{r setup}
+# Elegant handling of namespace conflicts
+library(conflicted)
+
+# Path & data manipulation
+library(here)
+library(tidyverse)
+conflict_prefer("filter", "dplyr")
+```
+
+# Data preparation
+
 ## Import data
 Import IST data:
 
