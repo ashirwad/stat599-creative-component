@@ -127,4 +127,50 @@ ist_deficit_tab <- ist %>%
 summary(ist_deficit_tab)
 ```
 
+Health variables:
+
+```{r ist-health-tab}
+ist_health_tab <- ist %>%
+  select(dead_or_dep, RCONSC, RSLEEP, RATRIAL, RCT, RVISINF, RSBP) %>%
+  var_labels(
+    !!!deframe(
+      filter(
+        ist_var_labels, 
+        var %in% c("RCONSC", "RSLEEP", "RATRIAL", "RCT", "RVISINF", "RSBP")
+      )
+    )
+  ) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    ),
+    RCONSC = recode(
+      RCONSC, "F" = "Fully alert", "D" = "Drowsy", "U" = "Unconscious"
+    )
+  ) %>%
+  mutate(across(RSLEEP:RVISINF, ~ recode(.x, "N" = "No", "Y" = "Yes"))) %>%
+  tableby(dead_or_dep ~ ., data = .)
+print(summary(ist_health_tab), width = 20)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
