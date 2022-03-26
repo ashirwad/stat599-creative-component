@@ -16,6 +16,9 @@ library(conflicted)
 library(here)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
+
+# Pretty tables
+library(arsenal)
 ```
 
 # Data preparation
@@ -61,5 +64,40 @@ ist <- ist_raw %>%
   mutate(across(where(is.character), ~ as.factor(.x)))
 glimpse(ist)
 ```
+
+# Data summary
+
+## Variable labels
+Create a tibble of variable labels:
+
+```{r ist-var-labels}
+ist_var_labels <- tibble(
+  RDELAY = "Delay between stroke and randomization (hrs.)",
+  RCONSC = "Conscious state at randomization",
+  SEX = "Sex",
+  AGE = "Age (yrs.)",
+  RSLEEP = "Symptoms noted on waking",
+  RATRIAL = "Atrial fibrillation",
+  RCT = "CT scan before randomization",
+  RVISINF = "Infarct visible on CT scan",
+  RHEP24 = "Heparin within 24 hours prior to randomization",
+  RASP3 = "Aspirin within 3 days prior to randomization",
+  RSBP = "Systolic blood pressure at randomization (mmHg)",
+  RDEF1 = "Face deficit",
+  RDEF2 = "Arm/hand deficit",
+  RDEF3 = "Leg/foot deficit",
+  RDEF4 = "Dysphasia",
+  RDEF5 = "Hemianopia",
+  RDEF6 = "Visuospatial disorder",
+  RDEF7 = "Brainstem/cerebellar signs",
+  RDEF8 = "Other deficit",
+  STYPE = "Stroke subtype",
+  treatment = "Treatment",
+  dead_or_dep = "Dead or dependent at 6 months follow-up?"
+) %>%
+  pivot_longer(everything(), names_to = "var", values_to = "label")
+glimpse(ist_var_labels)
+```
+
 
 
