@@ -24,6 +24,7 @@ conflict_prefer("filter", "dplyr")
 # Pretty tables
 library(sjlabelled)
 library(arsenal)
+library(crosstable)
 
 ## Set options
 
@@ -202,6 +203,30 @@ tibble(
   )
 ```
 
+## Crosstables
 
+```{r ist-trt-crosstab}
+ist_trt_crosstab <- ist_raw %>%
+  mutate(
+    RXASP = recode(RXASP, "N" = "No", "Y" = "Yes"),
+    RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
+    RXHEP = fct_relevel(RXHEP, "N", "L", "M") %>%
+      fct_recode("No" = "N", "Low dose" = "L", "Medium dose" = "M")
+  ) %>%
+  filter(!is.na(RATRIAL)) %>%
+  var_labels(
+    RXASP = "Trial aspirin allocated",
+    RXHEP = "Trial heparin allocated"
+  ) %>%
+  crosstable(
+    RXASP, 
+    by = RXHEP, 
+    total = "both", 
+    percent_pattern = "{n} ({p_row}/{p_col})",
+    percent_digits = 0
+  ) %>%
+  as_flextable()
+ist_trt_crosstab
+```
 
 
