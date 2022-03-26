@@ -153,6 +153,27 @@ ist_health_tab <- ist %>%
 print(summary(ist_health_tab), width = 20)
 ```
 
+Other variables:
+
+```{r ist-others-tab}
+ist_others_tab <- ist %>%
+  select(dead_or_dep, RDELAY, SEX, AGE, RHEP24, RASP3) %>%
+  var_labels(
+    !!!deframe(
+      filter(
+        ist_var_labels, var %in% c("RDELAY", "SEX", "AGE", "RHEP24", "RASP3")
+      )
+    )
+  ) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    )
+  ) %>%
+  mutate(across(RHEP24:RASP3, ~ recode(.x, "N" = "No", "Y" = "Yes"))) %>%
+  tableby(dead_or_dep ~ ., data = .)
+print(summary(ist_others_tab), width = 20)
+```
 
 
 
