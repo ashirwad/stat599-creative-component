@@ -17,6 +17,7 @@ library(default)
 
 # Path & data manipulation
 library(here)
+library(fs)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
 
@@ -29,6 +30,11 @@ library(arsenal)
 # Arsenal options
 tableby_control <- tableby.control(test = FALSE, digits = 2L)
 default(tableby) <- list(control = tableby_control)
+
+## Set output paths
+
+# Tables
+tab_out_path <- here("output", "tables")
 ```
 
 # Data preparation
@@ -116,11 +122,15 @@ glimpse(ist_var_labels)
 ## Summary stats table
 Generate summary stats tables of predictor variables:
 
-```{r ist-deficit-tab}
+```{r ist-deficit-tab, results = "asis"}
 ist_deficit_tab <- ist %>%
   select(dead_or_dep, contains("DEF")) %>%
   var_labels(!!!deframe(filter(ist_var_labels, str_detect(var, "DEF")))) %>%
-  mutate(dead_or_dep = recode(dead_or_dep, "no" = "No", "yes" = "Yes")) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    )
+  ) %>%
   mutate(
     across(
       contains("DEF"), 
@@ -133,7 +143,7 @@ summary(ist_deficit_tab)
 
 Health variables:
 
-```{r ist-health-tab}
+```{r ist-health-tab, results = "asis"}
 ist_health_tab <- ist %>%
   select(dead_or_dep, RCONSC, RSLEEP, RATRIAL, RCT, RVISINF, RSBP) %>%
   var_labels(
@@ -159,7 +169,7 @@ print(summary(ist_health_tab), width = 20)
 
 Other variables:
 
-```{r ist-others-tab}
+```{r ist-others-tab, results = "asis"}
 ist_others_tab <- ist %>%
   select(dead_or_dep, RDELAY, SEX, AGE, RHEP24, RASP3) %>%
   var_labels(
@@ -179,22 +189,18 @@ ist_others_tab <- ist %>%
 print(summary(ist_others_tab), width = 20)
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```{r export-ist-descr-tabs, include = FALSE}
+tibble(
+  descr_tab = list(ist_deficit_tab, ist_health_tab, ist_others_tab),
+  name = list("patient-deficit", "patient-health", "patient-other")
+) %>%
+  pwalk(
+    ~ write2word(
+      .x, 
+      path(tab_out_path, paste(.y, "vars-descr-stats-table.docx", sep = "-"))
+    )
+  )
+```
 
 
 
