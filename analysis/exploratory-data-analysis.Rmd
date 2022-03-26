@@ -12,13 +12,23 @@ Define setup chunk:
 # Elegant handling of namespace conflicts
 library(conflicted)
 
+# Change function argument default
+library(default)
+
 # Path & data manipulation
 library(here)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
 
 # Pretty tables
+library(sjlabelled)
 library(arsenal)
+
+## Set options
+
+# Arsenal options
+tableby_control <- tableby.control(test = FALSE, digits = 2L)
+default(tableby) <- list(control = tableby_control)
 ```
 
 # Data preparation
@@ -99,5 +109,22 @@ ist_var_labels <- tibble(
 glimpse(ist_var_labels)
 ```
 
+## Summary stats table
+Generate summary stats tables of predictor variables:
+
+```{r ist-deficit-tab}
+ist_deficit_tab <- ist %>%
+  select(dead_or_dep, contains("DEF")) %>%
+  var_labels(!!!deframe(filter(ist_var_labels, str_detect(var, "DEF")))) %>%
+  mutate(dead_or_dep = recode(dead_or_dep, "no" = "No", "yes" = "Yes")) %>%
+  mutate(
+    across(
+      contains("DEF"), 
+      ~ recode(.x, "N" = "No", "Y" = "Yes", "C" = "Can't access")
+    )
+  ) %>%
+  tableby(dead_or_dep ~ ., data = .)
+summary(ist_deficit_tab)
+```
 
 
