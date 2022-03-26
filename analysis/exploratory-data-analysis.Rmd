@@ -71,7 +71,11 @@ ist <- ist_raw %>%
       fct_relevel("no")
   ) %>%
   select(-RXASP, -RXHEP, -OCCODE) %>%
-  mutate(across(where(is.character), ~ as.factor(.x)))
+  mutate(across(where(is.character), ~ as.factor(.x))) %>%
+  filter(
+    !is.na(RATRIAL), # discard pilot phase data due to incompleteness
+    dead_or_dep != "missing"
+  ) 
 glimpse(ist)
 ```
 
