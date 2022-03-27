@@ -204,6 +204,7 @@ tibble(
 ```
 
 ## Crosstables
+Create a cross table of the two treatments:
 
 ```{r ist-trt-crosstab}
 ist_trt_crosstab <- ist_raw %>%
@@ -228,5 +229,40 @@ ist_trt_crosstab <- ist_raw %>%
   as_flextable()
 ist_trt_crosstab
 ```
+
+Create a cross table of treatment by outcome:
+
+```{r ist-trt-by-outcome-crosstab}
+ist_trt_by_outcome_crosstab <- ist %>%
+  mutate(
+    treatment = fct_recode(
+      treatment,
+      "Asp (No), Hep (No)" = "no_asp_no_hep",
+      "Asp (No), Hep (Low)" = "no_asp_low_hep",
+      "Asp (No), Hep (Medium)" = "no_asp_med_hep",
+      "Asp (Yes), Hep (No)" = "yes_asp_no_hep",
+      "Asp (Yes), Hep (Low)" = "yes_asp_low_hep",
+      "Asp (Yes), Hep (Medium)" = "yes_asp_med_hep",
+    ),
+    dead_or_dep = fct_drop(dead_or_dep, "missing") %>%
+      fct_recode(dead_or_dep, "No" = "no", "Yes" = "yes")
+  ) %>%
+  var_labels(
+    treatment = "Treatment",
+    dead_or_dep = "Dead or dependent"
+  ) %>%
+  crosstable(
+    treatment, 
+    by = dead_or_dep, 
+    total = "both", 
+    percent_pattern = "{n} ({p_row}/{p_col})",
+    percent_digits = 1
+  ) %>%
+  as_flextable()
+ist_trt_by_outcome_crosstab
+```
+
+
+
 
 
