@@ -262,7 +262,17 @@ ist_trt_by_outcome_crosstab <- ist %>%
 ist_trt_by_outcome_crosstab
 ```
 
-
+```{r export-ist-crosstabs, include = FALSE}
+tibble(
+  crosstab = list(ist_trt_crosstab, ist_trt_by_outcome_crosstab),
+  name = list(
+    "aspirin-by-heparin-crosstab.docx", "treatment-by-outcome-crosstab.docx"
+  )
+) %>%
+  pwalk(
+    ~ flextable::save_as_docx(.x, path = path(tab_out_path, .y))
+  )
+```
 
 
 
