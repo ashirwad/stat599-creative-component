@@ -284,6 +284,17 @@ country_codes <- read_csv(here("data", "IST_country_codes.csv"))
 glimpse(country_codes)
 ```
 
+## Patient count by country
+Create a tibble with patient count by country:
+
+```{r patient-count-by-country}
+patient_count_by_country <- ist_raw %>%
+  select(COUNTRY, CNTRYNUM) %>%
+  left_join(country_codes, by = c("CNTRYNUM" = "Code")) %>%
+  count(Country)
+glimpse(patient_count_by_country)
+```
+
 ## World map
 Create data for mapping:
 
