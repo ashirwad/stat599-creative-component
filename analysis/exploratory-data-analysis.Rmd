@@ -245,7 +245,7 @@ ist_trt_by_outcome_crosstab <- ist %>%
       "Asp (Yes), Hep (Medium)" = "yes_asp_med_hep",
     ),
     dead_or_dep = fct_drop(dead_or_dep, "missing") %>%
-      fct_recode(dead_or_dep, "No" = "no", "Yes" = "yes")
+      fct_recode("No" = "no", "Yes" = "yes")
   ) %>%
   var_labels(
     treatment = "Treatment",
