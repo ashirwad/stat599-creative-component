@@ -290,3 +290,20 @@ patient_map_data <- world_map %>%
 glimpse(patient_map_data)
 ```
 
+## Patient map
+Create a map showing the geographic distribution of IST patients:
+
+```{r patient-map}
+patient_map <- patient_map_data %>%
+  ggplot(aes(fill = n)) + 
+  geom_sf() + 
+  labs(
+    subtitle = "19,435 patients from 467 hospitals in 36 countries",
+    fill = NULL
+  ) +
+  scale_fill_viridis_c(na.value = "white") + 
+  theme_bw() + 
+  theme(legend.position = c(0.12, 0.15), legend.direction = "horizontal")
+patient_map
+```
+
