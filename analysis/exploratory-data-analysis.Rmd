@@ -1,0 +1,278 @@
+---
+title: "Untitled"
+author: "Ashirwad Barnwal"
+date: '2022-03-25'
+output: html_document
+---
+
+# Getting setup
+Define setup chunk:
+
+```{r setup}
+# Elegant handling of namespace conflicts
+library(conflicted)
+
+# Change function argument default
+library(default)
+
+# Path & data manipulation
+library(here)
+library(fs)
+library(tidyverse)
+conflict_prefer("filter", "dplyr")
+
+# Pretty tables
+library(sjlabelled)
+library(arsenal)
+library(crosstable)
+
+## Set options
+
+# Arsenal options
+tableby_control <- tableby.control(test = FALSE, digits = 2L)
+default(tableby) <- list(control = tableby_control)
+
+## Set output paths
+
+# Tables
+tab_out_path <- here("output", "tables")
+```
+
+# Data preparation
+
+## Import data
+Import IST data:
+
+```{r ist-raw, message = FALSE, warning = FALSE}
+ist_raw <- read_csv(here("data", "IST_corrected.csv"))
+glimpse(ist_raw)
+```
+
+## Clean data
+Clean IST data:
+
+```{r ist}
+ist <- ist_raw %>%
+  select(RDELAY:STYPE, RXASP, RXHEP, OCCODE) %>%
+  mutate(
+    RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
+    treatment = case_when(
+      RXASP == "N" & RXHEP == "N" ~ "no_asp_no_hep",
+      RXASP == "N" & RXHEP == "L" ~ "no_asp_low_hep",
+      RXASP == "N" & RXHEP == "M" ~ "no_asp_med_hep",
+      RXASP == "Y" & RXHEP == "N" ~ "yes_asp_no_hep",
+      RXASP == "Y" & RXHEP == "L" ~ "yes_asp_low_hep",
+      RXASP == "Y" & RXHEP == "M" ~ "yes_asp_med_hep"
+    ),
+    treatment = fct_relevel(treatment, "no_asp_no_hep") %>%
+      fct_relevel("yes_asp_no_hep", after = 3),
+    OCCODE = recode(
+      OCCODE, `1` = "dead", `2` = "dependent", `3` = "not_recovered", 
+      `4` = "recovered", .default = "missing"
+    ),
+    dead_or_dep = case_when(
+      OCCODE %in% c("dead", "dependent") ~ "yes",
+      OCCODE %in% c("not_recovered", "recovered") ~ "no",
+      OCCODE == "missing" ~ "missing"
+    ) %>% 
+      fct_relevel("no")
+  ) %>%
+  select(-RXASP, -RXHEP, -OCCODE) %>%
+  mutate(across(where(is.character), ~ as.factor(.x))) %>%
+  filter(
+    !is.na(RATRIAL), # discard pilot phase data due to incompleteness
+    dead_or_dep != "missing"
+  ) 
+glimpse(ist)
+```
+
+# Data summary
+
+## Variable labels
+Create a tibble of variable labels:
+
+```{r ist-var-labels}
+ist_var_labels <- tibble(
+  RDELAY = "Delay between stroke and randomization (hrs.)",
+  RCONSC = "Conscious state at randomization",
+  SEX = "Sex",
+  AGE = "Age (yrs.)",
+  RSLEEP = "Symptoms noted on waking",
+  RATRIAL = "Atrial fibrillation",
+  RCT = "CT scan before randomization",
+  RVISINF = "Infarct visible on CT scan",
+  RHEP24 = "Heparin within 24 hours prior to randomization",
+  RASP3 = "Aspirin within 3 days prior to randomization",
+  RSBP = "Systolic blood pressure at randomization (mmHg)",
+  RDEF1 = "Face deficit",
+  RDEF2 = "Arm/hand deficit",
+  RDEF3 = "Leg/foot deficit",
+  RDEF4 = "Dysphasia",
+  RDEF5 = "Hemianopia",
+  RDEF6 = "Visuospatial disorder",
+  RDEF7 = "Brainstem/cerebellar signs",
+  RDEF8 = "Other deficit",
+  STYPE = "Stroke subtype",
+  treatment = "Treatment",
+  dead_or_dep = "Dead or dependent at 6 months follow-up?"
+) %>%
+  pivot_longer(everything(), names_to = "var", values_to = "label")
+glimpse(ist_var_labels)
+```
+
+## Summary stats table
+Generate summary stats tables of predictor variables:
+
+```{r ist-deficit-tab, results = "asis"}
+ist_deficit_tab <- ist %>%
+  select(dead_or_dep, contains("DEF")) %>%
+  var_labels(!!!deframe(filter(ist_var_labels, str_detect(var, "DEF")))) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    )
+  ) %>%
+  mutate(
+    across(
+      contains("DEF"), 
+      ~ recode(.x, "N" = "No", "Y" = "Yes", "C" = "Can't access")
+    )
+  ) %>%
+  tableby(dead_or_dep ~ ., data = .)
+summary(ist_deficit_tab)
+```
+
+Health variables:
+
+```{r ist-health-tab, results = "asis"}
+ist_health_tab <- ist %>%
+  select(dead_or_dep, RCONSC, RSLEEP, RATRIAL, RCT, RVISINF, RSBP) %>%
+  var_labels(
+    !!!deframe(
+      filter(
+        ist_var_labels, 
+        var %in% c("RCONSC", "RSLEEP", "RATRIAL", "RCT", "RVISINF", "RSBP")
+      )
+    )
+  ) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    ),
+    RCONSC = recode(
+      RCONSC, "F" = "Fully alert", "D" = "Drowsy", "U" = "Unconscious"
+    )
+  ) %>%
+  mutate(across(RSLEEP:RVISINF, ~ recode(.x, "N" = "No", "Y" = "Yes"))) %>%
+  tableby(dead_or_dep ~ ., data = .)
+print(summary(ist_health_tab), width = 20)
+```
+
+Other variables:
+
+```{r ist-others-tab, results = "asis"}
+ist_others_tab <- ist %>%
+  select(dead_or_dep, RDELAY, SEX, AGE, RHEP24, RASP3) %>%
+  var_labels(
+    !!!deframe(
+      filter(
+        ist_var_labels, var %in% c("RDELAY", "SEX", "AGE", "RHEP24", "RASP3")
+      )
+    )
+  ) %>%
+  mutate(
+    dead_or_dep = recode(
+      dead_or_dep, "no" = "Not dead/dependent", "yes" = "Dead/dependent"
+    )
+  ) %>%
+  mutate(across(RHEP24:RASP3, ~ recode(.x, "N" = "No", "Y" = "Yes"))) %>%
+  tableby(dead_or_dep ~ ., data = .)
+print(summary(ist_others_tab), width = 20)
+```
+
+```{r export-ist-descr-tabs, include = FALSE}
+tibble(
+  descr_tab = list(ist_deficit_tab, ist_health_tab, ist_others_tab),
+  name = list("patient-deficit", "patient-health", "patient-other")
+) %>%
+  pwalk(
+    ~ write2word(
+      .x, 
+      path(tab_out_path, paste(.y, "vars-descr-stats-table.docx", sep = "-"))
+    )
+  )
+```
+
+## Crosstables
+Create a cross table of the two treatments:
+
+```{r ist-trt-crosstab}
+ist_trt_crosstab <- ist_raw %>%
+  mutate(
+    RXASP = recode(RXASP, "N" = "No", "Y" = "Yes"),
+    RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
+    RXHEP = fct_relevel(RXHEP, "N", "L", "M") %>%
+      fct_recode("No" = "N", "Low dose" = "L", "Medium dose" = "M")
+  ) %>%
+  filter(!is.na(RATRIAL)) %>%
+  var_labels(
+    RXASP = "Trial aspirin allocated",
+    RXHEP = "Trial heparin allocated"
+  ) %>%
+  crosstable(
+    RXASP, 
+    by = RXHEP, 
+    total = "both", 
+    percent_pattern = "{n} ({p_row}/{p_col})",
+    percent_digits = 0
+  ) %>%
+  as_flextable()
+ist_trt_crosstab
+```
+
+Create a cross table of treatment by outcome:
+
+```{r ist-trt-by-outcome-crosstab}
+ist_trt_by_outcome_crosstab <- ist %>%
+  mutate(
+    treatment = fct_recode(
+      treatment,
+      "Asp (No), Hep (No)" = "no_asp_no_hep",
+      "Asp (No), Hep (Low)" = "no_asp_low_hep",
+      "Asp (No), Hep (Medium)" = "no_asp_med_hep",
+      "Asp (Yes), Hep (No)" = "yes_asp_no_hep",
+      "Asp (Yes), Hep (Low)" = "yes_asp_low_hep",
+      "Asp (Yes), Hep (Medium)" = "yes_asp_med_hep",
+    ),
+    dead_or_dep = fct_drop(dead_or_dep, "missing") %>%
+      fct_recode("No" = "no", "Yes" = "yes")
+  ) %>%
+  var_labels(
+    treatment = "Treatment",
+    dead_or_dep = "Dead or dependent"
+  ) %>%
+  crosstable(
+    treatment, 
+    by = dead_or_dep, 
+    total = "both", 
+    percent_pattern = "{n} ({p_row}/{p_col})",
+    percent_digits = 1
+  ) %>%
+  as_flextable()
+ist_trt_by_outcome_crosstab
+```
+
+```{r export-ist-crosstabs, include = FALSE}
+tibble(
+  crosstab = list(ist_trt_crosstab, ist_trt_by_outcome_crosstab),
+  name = list(
+    "aspirin-by-heparin-crosstab.docx", "treatment-by-outcome-crosstab.docx"
+  )
+) %>%
+  pwalk(
+    ~ flextable::save_as_docx(.x, path = path(tab_out_path, .y))
+  )
+```
+
+
+
