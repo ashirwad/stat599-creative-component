@@ -276,6 +276,14 @@ tibble(
 
 # Create a geographic map of IST patients
 
+## Country codes
+Import country codes data:
+
+```{r country-codes}
+country_codes <- read_csv(here("data", "IST_country_codes.csv"))
+glimpse(country_codes)
+```
+
 ## World map
 Create data for mapping:
 
