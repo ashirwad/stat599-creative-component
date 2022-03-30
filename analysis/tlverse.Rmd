@@ -20,12 +20,10 @@ Define setup chunk:
 library(conflicted)
 
 # Miscellaneous
-library(default)
 library(tictoc)
 library(doFuture)
 registerDoFuture()
 plan(multisession)
-# library(lightgbm)
 
 # Path & data manipulation
 library(here)
@@ -34,32 +32,10 @@ conflict_prefer("filter", "dplyr")
 
 # Model building & evaluation
 library(tidymodels)
-library(treesnip)
-library(stacks)
 
-# Pretty tables
-library(summarytools)
-st_options(
-  style = "rmarkdown",
-  plain.ascii = FALSE,
-  footnote = NA,
-  dfSummary.style = "grid",
-  dfSummary.valid.col = FALSE,
-  dfSummary.graph.magnif = 0.75,
-  tmp.img.dir = "/img",
-  subtitle.emphasis = FALSE
-)
-
-# My functions
-pull_entry <- function(in_data, trt_type, col_name) {
-  in_data %>%
-    filter(treatment == trt_type) %>%
-    pluck(col_name, 1)
-}
-```
-
-```{r st-css, echo = FALSE, results = "asis"}
-st_css()
+# Model explanation
+library(DALEX)
+library(DALEXtra)
 ```
 
 # International Stroke Trial (IST) data
@@ -77,7 +53,7 @@ Create a subset of IST data for model building:
 
 ```{r ist}
 ist <- ist_raw %>%
-  select(RDELAY:STYPE, RXASP, RXHEP, FDEAD, OCCODE) %>%
+  select(RDELAY:STYPE, RXASP, RXHEP, OCCODE) %>%
   mutate(
     RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
     treatment = case_when(
@@ -101,118 +77,6 @@ ist <- ist_raw %>%
 glimpse(ist)
 ```
 
-Create six data frames, one for each treatment group:
-
-```{r ist-nested}
-ist_nested <- ist %>%
-  filter(six_month_outcome != "missing") %>%
-  mutate(six_month_outcome = fct_drop(six_month_outcome, "missing")) %>%
-  group_by(treatment) %>%
-  nest() %>%
-  ungroup()
-glimpse(ist_nested)
-```
-
-Generate descriptive summaries for data corresponding to each treatment group:
-
-```{r ist-smry, message = FALSE}
-ist_smry <- ist_nested %>%
-  mutate(
-    df_summary = map(data, ~ dfSummary(.x))
-  )
-glimpse(ist_smry)
-```
-
-### Treatment A: No aspirin, no heparin
-Glimpse data:
-
-```{r ist-nasp-nhep}
-pull_entry(ist_nested, "no_asp_no_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-nasp-nhep-smry, results = "asis"}
-pull_entry(ist_smry, "no_asp_no_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
-### Treatment B: No aspirin, low heparin
-Glimpse data:
-
-```{r ist-nasp-lhep}
-pull_entry(ist_nested, "no_asp_low_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-nasp-lhep-smry, results = "asis"}
-pull_entry(ist_smry, "no_asp_low_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
-### Treatment C: No aspirin, medium heparin
-Glimpse data:
-
-```{r ist-nasp-mhep}
-pull_entry(ist_nested, "no_asp_med_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-nasp-mhep-smry, results = "asis"}
-pull_entry(ist_smry, "no_asp_med_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
-### Treatment D: aspirin, no heparin
-Glimpse data:
-
-```{r ist-asp-nhep}
-pull_entry(ist_nested, "yes_asp_no_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-asp-nhep-smry, results = "asis"}
-pull_entry(ist_smry, "yes_asp_no_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
-### Treatment E: aspirin, low heparin
-Glimpse data:
-
-```{r ist-asp-lhep}
-pull_entry(ist_nested, "yes_asp_low_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-asp-lhep-smry, results = "asis"}
-pull_entry(ist_smry, "yes_asp_low_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
-### Treatment F: aspirin, medium heparin
-Glimpse data:
-
-```{r ist-asp-mhep}
-pull_entry(ist_nested, "yes_asp_med_hep", "data") %>%
-  glimpse()
-```
-
-View data summary:
-
-```{r ist-asp-mhep-smry, results = "asis"}
-pull_entry(ist_smry, "yes_asp_med_hep", "df_summary") %>%
-  print(max.tbl.height = 600, method = "render")
-```
-
 ## Data partitioning
 Create data partitions:
 
@@ -221,9 +85,18 @@ Create data partitions:
 set.seed(123)
 
 # Data partitions
-ist_fdead_nasp_nhep <- pull_entry(ist_fdead, "no_asp_no_hep", "data") %>%
-  mutate(across(where(is.character), as.factor))
-ist_split <- initial_split(ist_fdead_nasp_nhep, strata = FDEAD)
+ist_dependent <- ist %>%
+  filter(six_month_outcome != "missing") %>%
+  mutate(
+    six_month_outcome = fct_drop(six_month_outcome, "missing"),
+    dependent = if_else(six_month_outcome == "dependent", "yes", "no") %>%
+      fct_relevel("no")
+  ) %>%
+  select(-six_month_outcome) %>%
+  drop_na() %>%
+  sample_frac(0.15)
+
+ist_split <- initial_split(ist_dependent, strata = dependent)
 ist_train <- training(ist_split)
 ist_test <- testing(ist_split)
 
@@ -288,35 +161,6 @@ xgb_spec <- boost_tree(
 xgb_spec
 ```
 
-### LightGBM
-Specify a lightgbm model:
-
-```{r lgbm-spec}
-lgbm_spec <- boost_tree(
-  trees = 1000,
-  min_n = tune(),
-  tree_depth = tune(),
-) %>%
-  set_mode("classification") %>%
-  set_engine("lightgbm")
-lgbm_spec
-```
-
-### CatBoost
-Specify a catboost model:
-
-```{r catb-spec}
-catb_spec <- boost_tree(
-  trees = 1000,
-  min_n = tune(),
-  tree_depth = tune(),
-  learn_rate = tune()
-) %>%
-  set_mode("classification") %>%
-  set_engine("catboost")
-catb_spec
-```
-
 ## Feature engineering {.tabset}
 Define recipes for feature engineering:
 
@@ -324,7 +168,7 @@ Define recipes for feature engineering:
 Create dummy variables:
 
 ```{r base-rec}
-base_rec <- recipe(FDEAD ~ ., data = ist_train) %>%
+base_rec <- recipe(dependent ~ ., data = ist_train) %>%
   step_dummy(all_nominal(), -all_outcomes())
 base_rec
 ```
@@ -336,23 +180,6 @@ Center and scale numeric variables:
 norm_rec <- base_rec %>%
   step_normalize(all_predictors())
 norm_rec
-```
-
-### Helper
-Create a helper function to add recipes to nested data frames:
-
-```{r add-ist-recipe}
-add_ist_recipe <- function(data) {
-  data %>%
-    mutate(
-      base_rec = map(
-        ist_train, 
-        ~ recipe(FDEAD ~ ., data = .x) %>%
-            step_dummy(all_nominal(), -all_outcomes())
-      ),
-      norm_rec = map(base_rec, ~ .x %>% step_normalize(all_predictors()))
-    )
-}
 ```
 
 ## Modeling workflow {.tabset}
@@ -388,53 +215,7 @@ xgb_wflow <- workflow() %>%
 xgb_wflow
 ```
 
-### LightGBM
-Specify a modeling workflow for lightgbm:
-
-```{r lgbm-wflow}
-lgbm_wflow <- workflow() %>%
-  add_recipe(recipe(FDEAD ~ ., data = ist_train)) %>%
-  add_model(lgbm_spec)
-lgbm_wflow
-```
-
-### CatBoost
-Specify a modeling workflow for catboost:
-
-```{r catb-wflow}
-catb_wflow <- workflow() %>%
-  add_formula(FDEAD ~ .) %>%
-  add_model(catb_spec)
-catb_wflow
-```
-
-### Helper
-Create a helper function to add modeling workflows to nested data frames:
-
-```{r add-ist-wflow}
-add_ist_wflow <- function(data) {
-  data %>%
-    mutate(
-      rf_wflow = map2(
-        base_rec, rf_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      ),
-      nnet_wflow = map2(
-        norm_rec, nnet_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      ),
-      xgb_wflow = map2(
-        base_rec, xgb_spec, ~ workflow() %>% add_recipe(.x) %>% add_model(.y)
-      )
-    )
-}
-```
-
 ## Model tuning {.tabset}
-Define control settings for data stacking:
-
-```{r cntrl-grid}
-cntrl_grid <- control_stack_grid()
-cntrl_grid
-```
 
 ### Random forest
 Tune random forest model:
@@ -445,31 +226,10 @@ set.seed(345)
 rf_res <- tune_grid(
   object = rf_wflow,
   resamples = ist_folds,
-  grid = 10,
-  control = cntrl_grid
+  grid = 10
 )
 toc()
 rf_res
-```
-
-Define a function to tune random forest model for nested data frames:
-
-```{r tune-ist-rf}
-tune_ist_rf <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      rf_res = map2(
-        rf_wflow, 
-        ist_folds, 
-        ~ tune_grid(
-            object = .x,
-            resamples = .y,
-            grid = 10,
-            control = cntrl_grid
-          )
-      )
-    )
-}
 ```
 
 ### Neural network
@@ -481,31 +241,10 @@ set.seed(123)
 nnet_res <- tune_grid(
   object = nnet_wflow,
   resamples = ist_folds,
-  grid = 10,
-  control = cntrl_grid
+  grid = 10
 )
 toc()
 nnet_res
-```
-
-Define a function to tune neural network model for nested data frames:
-
-```{r tune-ist-nnet}
-tune_ist_nnet <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      nnet_res = map2(
-        nnet_wflow, 
-        ist_folds, 
-        ~ tune_grid(
-            object = .x,
-            resamples = .y,
-            grid = 10,
-            control = cntrl_grid
-          )
-      )
-    )
-}
 ```
 
 ### XGBoost
@@ -532,99 +271,10 @@ set.seed(123)
 xgb_res <- tune_grid(
   object = xgb_wflow,
   resamples = ist_folds,
-  grid = xgb_grid,
-  control = cntrl_grid
+  grid = xgb_grid
 )
 toc()
 xgb_res
-```
-
-Define a function to tune xgboost model for nested data frames:
-
-```{r tune-ist-xgb}
-tune_ist_xgb <- function(data, cntrl_grid) {
-  data %>%
-    mutate(
-      xgb_grid = map(
-        ist_train,
-        ~ grid_latin_hypercube(
-            min_n(),
-            tree_depth(),
-            learn_rate(),
-            loss_reduction(),
-            sample_size = sample_prop(),
-            finalize(mtry(), .x),
-            size = 30
-          )
-      ),
-      xgb_res = pmap(
-        list(xgb_wflow, ist_folds, xgb_grid),
-        ~ tune_grid(
-            object = ..1,
-            resamples = ..2,
-            grid = ..3,
-            control = cntrl_grid
-          )
-      )
-    )
-}
-```
-
-### LightGBM
-Construct parameter grid:
-
-```{r lgbm-grid}
-lgbm_grid <- grid_latin_hypercube(
-  min_n(),
-  tree_depth(),
-  size = 30
-)
-lgbm_grid
-```
-
-Tune lightgbm model:
-
-```{r lgbm-res, eval = FALSE}
-# TODO: Current version of lightgbm crashes R session;
-# run this chunk when new version is available on cran
-tic()
-set.seed(123)
-lgbm_res <- tune_grid(
-  object = lgbm_wflow,
-  resamples = ist_folds,
-  grid = lgbm_grid,
-  control = cntrl_grid
-)
-toc()
-lgbm_res
-```
-
-### CatBoost
-Construct parameter grid:
-
-```{r catb-grid}
-catb_grid <- grid_latin_hypercube(
-  min_n(),
-  tree_depth(range = c(4, 10)),
-  learn_rate(),
-  size = 30
-)
-catb_grid
-```
-
-Tune catboost model:
-
-```{r catb-res}
-tic()
-set.seed(123)
-catb_res <- tune_grid(
-  object = catb_wflow,
-  resamples = ist_folds,
-  grid = catb_grid,
-  control = cntrl_grid
-)
-toc()
-catb_res
 ```
 
 ## Best models {.tabset}
@@ -634,8 +284,8 @@ Identify best models and create final model specifications:
 Best random forest model:
 
 ```{r rf-final-spec}
-rf_best_auc <- select_best(rf_res, "roc_auc")
-rf_final_spec <- finalize_model(rf_spec, rf_best_auc)
+rf_best_acc <- select_best(rf_res, "accuracy")
+rf_final_spec <- finalize_model(rf_spec, rf_best_acc)
 rf_final_spec
 ```
 
@@ -643,8 +293,8 @@ rf_final_spec
 Best neural net model:
 
 ```{r nnet-final-spec}
-nnet_best_auc <- select_best(nnet_res, "roc_auc")
-nnet_final_spec <- finalize_model(nnet_spec, nnet_best_auc)
+nnet_best_acc <- select_best(nnet_res, "accuracy")
+nnet_final_spec <- finalize_model(nnet_spec, nnet_best_acc)
 nnet_final_spec
 ```
 
@@ -652,18 +302,9 @@ nnet_final_spec
 Best XGBoost model:
 
 ```{r xgb-final-spec}
-xgb_best_auc <- select_best(xgb_res, "roc_auc")
-xgb_final_spec <- finalize_model(xgb_spec, xgb_best_auc)
+xgb_best_acc <- select_best(xgb_res, "accuracy")
+xgb_final_spec <- finalize_model(xgb_spec, xgb_best_acc)
 xgb_final_spec
-```
-
-### CatBoost
-Best catboost model:
-
-```{r catb-final-spec}
-catb_best_auc <- select_best(catb_res, "roc_auc")
-catb_final_spec <- finalize_model(catb_spec, catb_best_auc)
-catb_final_spec
 ```
 
 ## Final workflows {.tabset}
@@ -697,16 +338,6 @@ xgb_final_wflow <- workflow() %>%
   add_recipe(base_rec) %>%
   add_model(xgb_final_spec)
 xgb_final_wflow
-```
-
-### CatBoost
-Create a final workflow for fitting catboost:
-
-```{r catb-final-wflow}
-catb_final_wflow <- workflow() %>%
-  add_formula(FDEAD ~ .) %>%
-  add_model(catb_final_spec)
-catb_final_wflow
 ```
 
 ## Final fits {.tabset}
@@ -751,19 +382,6 @@ xgb_final_res %>%
   collect_metrics()
 ```
 
-### CatBoost
-Fit the final best catboost model to the training set and evaluate the test set:
-
-```{r catb-final-res}
-tic()
-catb_final_res <- catb_final_wflow %>%
-  last_fit(ist_split)
-toc()
-
-catb_final_res %>%
-  collect_metrics()
-```
-
 ## ROC curve {.tabset}
 
 ### Random forest
@@ -772,7 +390,7 @@ Compute the data needed to plot the ROC curve for random forest model:
 ```{r rf-auc}
 rf_auc <- rf_final_res %>%
   collect_predictions() %>%
-  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  roc_curve(dependent, .pred_yes, event_level = "second") %>%
   mutate(model = "Random forest")
 rf_auc
 ```
@@ -783,7 +401,7 @@ Compute the data needed to plot the ROC curve for neural network model:
 ```{r nnet-auc}
 nnet_auc <- nnet_final_res %>%
   collect_predictions() %>%
-  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  roc_curve(dependent, .pred_yes, event_level = "second") %>%
   mutate(model = "Neural network")
 nnet_auc
 ```
@@ -794,7 +412,7 @@ Compute the data needed to plot the ROC curve for xgboost model:
 ```{r xgb-auc}
 xgb_auc <- xgb_final_res %>%
   collect_predictions() %>%
-  roc_curve(FDEAD, .pred_Y, event_level = "second") %>%
+  roc_curve(dependent, .pred_yes, event_level = "second") %>%
   mutate(model = "XGBoost")
 xgb_auc
 ```
@@ -808,8 +426,7 @@ roc_curves <- bind_rows(rf_auc, nnet_auc, xgb_auc) %>%
   geom_path(lwd = 1.5, alpha = 0.8) + 
   geom_abline(lty = 3) + 
   coord_equal() + 
-  scale_color_viridis_d(option = "plasma", end = 0.6) +
-  ggplotif
+  scale_color_viridis_d(option = "plasma", end = 0.6)
 roc_curves
 ```
 
