@@ -26,6 +26,9 @@ library(sjlabelled)
 library(arsenal)
 library(crosstable)
 
+# Pretty charts & maps
+library(rnaturalearth)
+
 ## Set options
 
 # Arsenal options
@@ -36,6 +39,14 @@ default(tableby) <- list(control = tableby_control)
 
 # Tables
 tab_out_path <- here("output", "tables")
+
+# Figures
+fig_out_path <- here("output", "figures")
+default(ggsave) <- list(
+  width = 6, # 6 inches
+  height = 6 * 0.618, # 0.618 is the golden ratio
+  path = fig_out_path
+)
 ```
 
 # Data preparation
@@ -274,5 +285,59 @@ tibble(
   )
 ```
 
+# Create a geographic map of IST patients
 
+## Country codes
+Import country codes data:
+
+```{r country-codes}
+country_codes <- read_csv(here("data", "IST_country_codes.csv"))
+glimpse(country_codes)
+```
+
+## Patient count by country
+Create a tibble with patient count by country:
+
+```{r patient-count-by-country}
+patient_count_by_country <- ist_raw %>%
+  select(COUNTRY, CNTRYNUM) %>%
+  left_join(country_codes, by = c("CNTRYNUM" = "Code")) %>%
+  count(Country)
+glimpse(patient_count_by_country)
+```
+
+## World map
+Create data for mapping:
+
+```{r patient-map-data}
+world_map <- ne_countries(returnclass = "sf")
+
+patient_map_data <- world_map %>%
+  select(name_en) %>%
+  filter(name_en != "Antarctica") %>%
+  mutate(name_en = recode(name_en, "United States of America" = "USA")) %>%
+  left_join(patient_count_by_country, by = c("name_en" = "Country"))
+glimpse(patient_map_data)
+```
+
+## Patient map
+Create a map showing the geographic distribution of IST patients:
+
+```{r patient-map}
+patient_map <- patient_map_data %>%
+  ggplot(aes(fill = n)) + 
+  geom_sf() + 
+  labs(
+    subtitle = "19,435 patients from 467 hospitals in 36 countries",
+    fill = NULL
+  ) +
+  scale_fill_viridis_c(na.value = "white") + 
+  theme_bw() + 
+  theme(legend.position = c(0.12, 0.15), legend.direction = "horizontal")
+patient_map
+```
+
+```{r export-patient-map, include = FALSE}
+ggsave("geopgraphic-distribution-of-patients.png", patient_map)
+```
 
