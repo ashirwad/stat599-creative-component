@@ -26,6 +26,9 @@ library(sjlabelled)
 library(arsenal)
 library(crosstable)
 
+# Pretty charts & maps
+library(rnaturalearth)
+
 ## Set options
 
 # Arsenal options
@@ -36,6 +39,14 @@ default(tableby) <- list(control = tableby_control)
 
 # Tables
 tab_out_path <- here("output", "tables")
+
+# Figures
+fig_out_path <- here("output", "figures")
+default(ggsave) <- list(
+  width = 6, # 6 inches
+  height = 6 * 0.618, # 0.618 is the golden ratio
+  path = fig_out_path
+)
 ```
 
 # Data preparation
@@ -324,5 +335,9 @@ patient_map <- patient_map_data %>%
   theme_bw() + 
   theme(legend.position = c(0.12, 0.15), legend.direction = "horizontal")
 patient_map
+```
+
+```{r export-patient-map, include = FALSE}
+ggsave("geopgraphic-distribution-of-patients.png", patient_map)
 ```
 
