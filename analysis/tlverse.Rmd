@@ -430,7 +430,22 @@ roc_curves <- bind_rows(rf_auc, nnet_auc, xgb_auc) %>%
 roc_curves
 ```
 
+# Model interpretation
 
+## Define explainers
+
+### Random forest
+
+```{r explainer-rf}
+explainer_rf <- explain_tidymodels(
+    rf_final_res$.workflow[[1]],
+    data = select(ist_train, -dependent),
+    y = as.numeric(pull(ist_train, dependent) %>% fct_rev()) - 1,
+    verbose = FALSE,
+    label = "RF"
+)
+explainer_rf
+```
 
 
 
