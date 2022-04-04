@@ -447,5 +447,35 @@ explainer_rf <- explain_tidymodels(
 explainer_rf
 ```
 
+## Local interpretation
+
+### Random forest
+Compute SHAP attributions:
+
+```{r local-rf}
+local_rf <- predict_parts(
+  explainer_rf, explainer_rf$data[1, ], type = "shap", B = 20
+)
+```
+
+Create a plot of SHAP attributions:
+
+```{r local-rf-plot}
+local_rf_plot <- local_rf %>%
+  with_groups(variable, ~ mutate(.x, mean_val = mean(contribution))) %>%
+  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
+  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+  geom_col(
+    data = ~ distinct(., variable, mean_val), 
+    aes(mean_val, variable), 
+    alpha = 0.5
+  ) +
+  geom_boxplot(width = 0.5) +
+  scale_fill_manual(values = colors_discrete_drwhy(2)) +
+  labs(y = NULL) + 
+  ggpubr::theme_pubclean() +
+  theme(legend.position = "none")
+local_rf_plot
+```
 
 
