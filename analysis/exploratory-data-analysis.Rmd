@@ -288,6 +288,18 @@ tibble(
   )
 ```
 
+```{r export-ist-crosstabs-rds, include = FALSE}
+tibble(
+  crosstab = list(ist_trt_crosstab, ist_trt_by_outcome_crosstab),
+  name = list(
+    "ist-trt-crosstab.rds", "ist-trt-by-outcome-crosstab.rds"
+  )
+) %>%
+  pwalk(
+    ~ export(.x, path(here("output", "rds-files"), .y))
+  )
+```
+
 # Create a geographic map of IST patients
 
 ## Country codes
