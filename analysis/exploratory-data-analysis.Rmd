@@ -20,6 +20,8 @@ library(here)
 library(fs)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
+library(santoku)
+library(rio)
 
 # Pretty tables
 library(sjlabelled)
@@ -28,6 +30,7 @@ library(crosstable)
 
 # Pretty charts & maps
 library(rnaturalearth)
+library(mapview)
 
 ## Set options
 
@@ -341,3 +344,26 @@ patient_map
 ggsave("geopgraphic-distribution-of-patients.png", patient_map)
 ```
 
+Create an interactive version of the previous map:
+
+```{r patient-map-leaflet}
+patient_map_leaflet <- patient_map_data %>%
+  mutate(quant_bin = chop_quantiles(n, 1:3/4)) %>%
+  rename(
+    "Country" = name_en, "Total patients" = n, "Quantile bin" = quant_bin
+  ) %>%
+  mapview(
+    zcol = "Quantile bin", 
+    alpha.regions = 1, 
+    na.alpha = 0, 
+    map.types = "CartoDB.Positron", 
+    layer.name = "Quantile bins"
+  )
+patient_map_leaflet
+```
+
+```{r export-patient-map-leaflet, include = FALSE}
+export(
+  patient_map_leaflet, here("output", "rds-files", "patient-map-leaflet.rds")
+)
+```
