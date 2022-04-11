@@ -22,10 +22,11 @@
 library(conflicted)
 library(here)
 library(tidyverse)
+library(rio)
 library(dlookr)
 
 # Import IST data
-ist <- here("output", "rds-files", "ist.rds")
+ist <- import(here("output", "rds-files", "ist.rds"))
 
 # Create EDA report
 ist %>%
