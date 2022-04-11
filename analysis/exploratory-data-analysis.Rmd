@@ -100,6 +100,10 @@ ist <- ist_raw %>%
 glimpse(ist)
 ```
 
+```{r export-ist, include = FALSE}
+export(ist, here("output", "rds-files", "ist.rds"))
+```
+
 # Data summary
 
 ## Variable labels
