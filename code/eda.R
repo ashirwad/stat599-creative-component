@@ -22,11 +22,7 @@
 library(conflicted)
 library(here)
 library(tidyverse)
-conflict_prefer("filter", "dplyr")
-library(rio)
 library(dlookr)
-
-options(datatable.na.strings = c("", "NA")) # read these strings as NA
 
 # Import IST data
 ist <- here("output", "rds-files", "ist.rds")
