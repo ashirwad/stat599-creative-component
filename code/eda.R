@@ -65,8 +65,7 @@ ist <- ist_raw %>%
   )
 
 # Create EDA report
-ist_raw %>%
-  select(RDELAY, RSBP, RDEF1:RDEF8) %>%
+ist %>%
   eda_web_report(
     output_file = "detailed-eda.html",
     output_dir = here("docs"),
