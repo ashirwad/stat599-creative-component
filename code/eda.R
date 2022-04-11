@@ -18,8 +18,13 @@
 
 # Setup chunk
 library(conflicted)
+library(here)
 library(tidyverse)
 library(rio)
 library(dlookr)
 
 options(datatable.na.options = c("", "NA")) # read these strings as NA
+
+# Import IST data
+ist_raw <- import(here("data", "IST_corrected.csv"))
+
