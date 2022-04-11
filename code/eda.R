@@ -1,6 +1,7 @@
 ## -----------------------------------------------------------------------------
 ##
-## Purpose of script:
+## Purpose of script: Create detailed exploratory data analysis (EDA) of the
+## variables of interest
 ##
 ## Author: Ashirwad Barnwal
 ##
@@ -11,8 +12,9 @@
 ##
 ## -----------------------------------------------------------------------------
 ##
-## Notes:
-##
+## Notes: This script creates a detailed EDA report for the variables identified
+## for further use with modeling during the preliminary EDA:
+## https://public.tableau.com/app/profile/ashirwad.barnwal5453/viz/ist-corrected-eda/ISTEDA
 ##
 ## -----------------------------------------------------------------------------
 
