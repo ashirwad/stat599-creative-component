@@ -400,16 +400,77 @@ export(roc_curves2, here("output", "rds-files", "roc-curves.rds"))
 ## Define explainers
 
 ### Random forest
+Create explainer for random forest:
 
 ```{r explainer-rf}
 explainer_rf <- explain_tidymodels(
-    rf_final_res$.workflow[[1]],
-    data = select(ist_train, -dependent),
-    y = as.numeric(pull(ist_train, dependent) %>% fct_rev()) - 1,
-    verbose = FALSE,
-    label = "RF"
+  rf_final_res$.workflow[[1]],
+  data = select(ist_train, -dead_or_dep),
+  y = as.numeric(pull(ist_train, dead_or_dep)) - 1,
+  verbose = FALSE,
+  label = "RF"
 )
 explainer_rf
+```
+
+### Neural network
+Create explainer for neural network:
+
+```{r explainer-nnet}
+explainer_nnet <- explain_tidymodels(
+  nnet_final_res$.workflow[[1]],
+  data = select(ist_train, -dead_or_dep),
+  y = as.numeric(pull(ist_train, dead_or_dep)) - 1,
+  verbose = FALSE,
+  label = "NNet"
+)
+explainer_nnet
+```
+
+### XGBoost
+Create explainer for XGBoost:
+
+```{r explainer-xgb}
+explainer_xgb <- explain_tidymodels(
+  xgb_final_res$.workflow[[1]],
+  data = select(ist_train, -dead_or_dep),
+  y = as.numeric(pull(ist_train, dead_or_dep)) - 1,
+  verbose = FALSE,
+  label = "XGB"
+)
+explainer_xgb
+```
+
+## Variable importance
+
+### Random forest
+Compute variable importance for random forest:
+
+```{r vip-rf}
+vip_rf <- model_parts(explainer_rf, loss_function = loss_one_minus_auc)
+vip_rf
+```
+
+### Neural network
+Compute variable importance for neural network:
+
+```{r vip-nnet}
+vip_nnet <- model_parts(explainer_nnet, loss_function = loss_one_minus_auc)
+vip_nnet
+```
+
+### XGBoost
+Compute variable importance for XGBoost:
+
+```{r vip-xgb}
+vip_xgb <- model_parts(explainer_xgb, loss_function = loss_one_minus_auc)
+vip_xgb
+```
+
+Create variable importance plot:
+
+```{r vip-plot}
+plot_vip(vip_rf, vip_nnet, vip_xgb)
 ```
 
 ## Local interpretation
