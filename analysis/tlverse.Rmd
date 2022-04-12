@@ -30,6 +30,12 @@ library(here)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
 library(rio)
+conflict_prefer("export", "rio")
+
+# Pretty plots
+library(ggpubr)
+library(plotly)
+conflict_prefer("layout", "plotly")
 
 # Model building & evaluation
 library(tidymodels)
@@ -374,8 +380,19 @@ roc_curves <- bind_rows(rf_auc, nnet_auc, xgb_auc) %>%
   geom_path(lwd = 1.5, alpha = 0.8) + 
   geom_abline(lty = 3) + 
   coord_equal() + 
-  scale_color_viridis_d(option = "plasma", end = 0.6)
+  scale_color_manual(values = colors_discrete_drwhy(3)) + 
+  theme_pubclean()
 roc_curves
+```
+
+```{r roc-curves2}
+roc_curves2 <- ggplotly(roc_curves) %>%
+  layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1))
+roc_curves2
+```
+
+```{r export-roc-curves2, include = FALSE}
+export(roc_curves2, here("output", "rds-files", "roc-curves.rds"))
 ```
 
 # Model interpretation
