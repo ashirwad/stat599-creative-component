@@ -96,7 +96,8 @@ ist <- ist_raw %>%
   filter(
     !is.na(RATRIAL), # discard pilot phase data due to incompleteness
     dead_or_dep != "missing"
-  ) 
+  ) %>%
+  mutate(dead_or_dep = fct_drop(dead_or_dep, "missing"))
 glimpse(ist)
 ```
 
