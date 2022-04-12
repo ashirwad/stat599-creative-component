@@ -46,7 +46,7 @@ ist <- import(here("output", "rds-files", "ist.rds"))
 glimpse(ist)
 ```
 
-## Data partitioning
+# Data partitioning
 Create data partitions:
 
 ```{r ist-splits}
@@ -54,36 +54,11 @@ Create data partitions:
 set.seed(123)
 
 # Data partitions
-ist_dependent <- ist %>%
-  filter(six_month_outcome != "missing") %>%
-  mutate(
-    six_month_outcome = fct_drop(six_month_outcome, "missing"),
-    dependent = if_else(six_month_outcome == "dependent", "yes", "no") %>%
-      fct_relevel("no")
-  ) %>%
-  select(-six_month_outcome) %>%
-  drop_na() %>%
-  sample_frac(0.15)
-
-ist_split <- initial_split(ist_dependent, strata = dependent)
+ist_split <- initial_split(sample_frac(ist, 0.1), strata = dead_or_dep)
 ist_train <- training(ist_split)
 ist_test <- testing(ist_split)
 
 ist_folds <- vfold_cv(ist_train, v = 5)
-```
-
-Create a function to partition data in nested data frames:
-
-```{r split-ist-data}
-split_ist_data <- function(data) {
-  data %>%
-    mutate(
-      ist_split = map(data, ~ initial_split(.x, strata = FDEAD)),
-      ist_train = map(ist_split, ~ training(.x)),
-      ist_test = map(ist_split, ~ testing(.x)),
-      ist_folds = map(ist_train, ~ vfold_cv(.x, v = 5, strata = FDEAD))
-    )
-}
 ```
 
 ## Model specification {.tabset}
