@@ -45,7 +45,7 @@ plot_vip <- function(..., top_n = 10) {
     ggplot2::geom_linerange(
       aes(ymin = y_min, ymax = dropout_loss), size = 8, alpha = 0.8
     ) +
-    gplot2::geom_boxplot(
+    ggplot2::geom_boxplot(
       data = semi_join(vip_rbind, vip_plot_df, by = c("variable", "label")),
       width = 0.2,
       color = "black"
@@ -55,5 +55,6 @@ plot_vip <- function(..., top_n = 10) {
     ggplot2::labs(y = "One minus AUC loss after permutations", x = NULL) +
     tidytext::scale_x_reordered() +
     ggplot2::scale_color_manual(values = DALEX::colors_discrete_drwhy(3)) +
-    ggpubr::theme_pubclean()
+    ggpubr::theme_pubclean() +
+    ggplot2::theme(legend.position = "none")
 }
