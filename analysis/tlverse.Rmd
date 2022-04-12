@@ -29,6 +29,7 @@ plan(multisession)
 library(here)
 library(tidyverse)
 conflict_prefer("filter", "dplyr")
+library(rio)
 
 # Model building & evaluation
 library(tidymodels)
@@ -36,6 +37,9 @@ library(tidymodels)
 # Model explanation
 library(DALEX)
 library(DALEXtra)
+
+# Set options
+options(datatable.na.strings = c("", "NA")) # read these strings as NA
 ```
 
 # International Stroke Trial (IST) data
@@ -112,7 +116,7 @@ Define recipes for feature engineering:
 Create dummy variables:
 
 ```{r base-rec}
-base_rec <- recipe(dependent ~ ., data = ist_train) %>%
+base_rec <- recipe(dead_or_dep ~ ., data = ist_train) %>%
   step_dummy(all_nominal(), -all_outcomes())
 base_rec
 ```
@@ -334,7 +338,7 @@ Compute the data needed to plot the ROC curve for random forest model:
 ```{r rf-auc}
 rf_auc <- rf_final_res %>%
   collect_predictions() %>%
-  roc_curve(dependent, .pred_yes, event_level = "second") %>%
+  roc_curve(dead_or_dep, .pred_yes, event_level = "second") %>%
   mutate(model = "Random forest")
 rf_auc
 ```
@@ -345,7 +349,7 @@ Compute the data needed to plot the ROC curve for neural network model:
 ```{r nnet-auc}
 nnet_auc <- nnet_final_res %>%
   collect_predictions() %>%
-  roc_curve(dependent, .pred_yes, event_level = "second") %>%
+  roc_curve(dead_or_dep, .pred_yes, event_level = "second") %>%
   mutate(model = "Neural network")
 nnet_auc
 ```
@@ -356,7 +360,7 @@ Compute the data needed to plot the ROC curve for xgboost model:
 ```{r xgb-auc}
 xgb_auc <- xgb_final_res %>%
   collect_predictions() %>%
-  roc_curve(dependent, .pred_yes, event_level = "second") %>%
+  roc_curve(dead_or_dep, .pred_yes, event_level = "second") %>%
   mutate(model = "XGBoost")
 xgb_auc
 ```
