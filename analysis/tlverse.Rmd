@@ -404,12 +404,39 @@ export(roc_curves2, here("output", "rds-files", "roc-curves.rds"))
 ```{r explainer-rf}
 explainer_rf <- explain_tidymodels(
     rf_final_res$.workflow[[1]],
-    data = select(ist_train, -dependent),
-    y = as.numeric(pull(ist_train, dependent) %>% fct_rev()) - 1,
+    data = select(ist_train, -dead_or_dep),
+    y = as.numeric(pull(ist_train, dead_or_dep)) - 1,
     verbose = FALSE,
     label = "RF"
 )
 explainer_rf
+```
+
+### Neural network
+
+```{r explainer-nnet}
+explainer_nnet <- explain_tidymodels(
+    nnet_final_res$.workflow[[1]],
+    data = select(ist_train, -dead_or_dep),
+    y = as.numeric(pull(ist_train, dead_or_dep)) - 1,
+    verbose = FALSE,
+    label = "NNet"
+)
+explainer_nnet
+```
+
+## Variable importance
+
+### Random forest
+
+```{r}
+vip_rf <- model_parts(explainer_rf, loss_function = loss_one_minus_auc)
+```
+
+### Neural network
+
+```{r}
+vip_nnet <- model_parts(explainer_nnet, loss_function = loss_one_minus_auc)
 ```
 
 ## Local interpretation
