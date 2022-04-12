@@ -39,41 +39,10 @@ library(DALEXtra)
 ```
 
 # International Stroke Trial (IST) data
-
-## Import data
 Import IST data:
 
-```{r ist-raw, message = FALSE, warning = FALSE}
-ist_raw <- read_csv(here("data", "IST_corrected.csv"))
-glimpse(ist_raw)
-```
-
-## Subset data {.tabset}
-Create a subset of IST data for model building:
-
 ```{r ist}
-ist <- ist_raw %>%
-  select(RDELAY:STYPE, RXASP, RXHEP, OCCODE) %>%
-  mutate(
-    RXHEP = fct_collapse(RXHEP, "M" = c("M", "H")),
-    treatment = case_when(
-      RXASP == "N" & RXHEP == "N" ~ "no_asp_no_hep",
-      RXASP == "N" & RXHEP == "L" ~ "no_asp_low_hep",
-      RXASP == "N" & RXHEP == "M" ~ "no_asp_med_hep",
-      RXASP == "Y" & RXHEP == "N" ~ "yes_asp_no_hep",
-      RXASP == "Y" & RXHEP == "L" ~ "yes_asp_low_hep",
-      RXASP == "Y" & RXHEP == "M" ~ "yes_asp_med_hep"
-    ),
-    treatment = fct_relevel(treatment, "no_asp_no_hep") %>%
-      fct_relevel("yes_asp_no_hep", after = 3),
-    OCCODE = recode(
-      OCCODE, `1` = "dead", `2` = "dependent", `3` = "not_recovered", 
-      `4` = "recovered", .default = "missing"
-    ),
-    six_month_outcome = fct_relevel(OCCODE, rev) %>% 
-      fct_relevel("missing", after = Inf)
-  ) %>%
-  select(-RXASP, -RXHEP, -OCCODE)
+ist <- import(here("output", "rds-files", "ist.rds"))
 glimpse(ist)
 ```
 
