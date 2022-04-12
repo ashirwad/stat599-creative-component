@@ -6,10 +6,8 @@ output: html_document
 ---
 
 ```{r before-doc, cache = FALSE}
-knitr::opts_chunk$set(
-  cache = TRUE, 
-  autodep = TRUE
-)
+knitr::opts_chunk$set(cache = TRUE, autodep = TRUE)
+source(here::here("code", "custom-funs.R"))
 ```
 
 # Getting setup
@@ -470,7 +468,17 @@ vip_xgb
 Create variable importance plot:
 
 ```{r vip-plot}
-plot_vip(vip_rf, vip_nnet, vip_xgb)
+vip_plot <- plot_vip(vip_rf, vip_nnet, vip_xgb)
+vip_plot
+```
+
+```{r vip-plot2}
+vip_plot2 <- ggplotly(vip_plot)
+vip_plot2
+```
+
+```{r export-vip-plot2, include = FALSE}
+export(vip_plot2, here("output", "rds-files", "vip-plot.rds"))
 ```
 
 ## Local interpretation
