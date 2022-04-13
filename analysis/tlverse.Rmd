@@ -481,6 +481,52 @@ vip_plot2
 export(vip_plot2, here("output", "rds-files", "vip-plot.rds"))
 ```
 
+## Global interpretation
+
+### Random forest
+Create PDP for age and blood pressure using random forest explainer:
+
+```{r pdp-age-rsbp-rf}
+pdp_age_rf <- model_profile(explainer_rf, "AGE")
+pdp_rsbp_rf <- model_profile(explainer_rf, "RSBP")
+```
+
+### Neural network
+Create PDP for age and blood pressure using neural network explainer:
+
+```{r pdp-age-rsbp-nnet}
+pdp_age_nnet <- model_profile(explainer_nnet, "AGE")
+pdp_rsbp_nnet <- model_profile(explainer_nnet, "RSBP")
+```
+
+### XGBoost
+Create PDP for age and blood pressure using XGBoost explainer:
+
+```{r pdp-age-rsbp-xgb}
+pdp_age_xgb <- model_profile(explainer_xgb, "AGE")
+pdp_rsbp_xgb <- model_profile(explainer_xgb, "RSBP")
+```
+
+Create PDP profiles for age and blood pressure:
+
+```{r pdp-age-rsbp}
+pdp_age_rsbp <- plot_pdp(
+  pdp_age_rf, pdp_rsbp_rf, pdp_age_nnet, pdp_rsbp_nnet, pdp_age_xgb, 
+  pdp_rsbp_xgb
+)
+pdp_age_rsbp
+```
+
+```{r pdp-age-rsbp2}
+pdp_age_rsbp2 <- ggplotly(pdp_age_rsbp) %>%
+  layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1))
+pdp_age_rsbp2
+```
+
+```{r export-pdp-age-rsbp2}
+export(pdp_age_rsbp2, here("output", "rds-files", "pdp-age-rsbp.rds"))
+```
+
 ## Local interpretation
 
 ### Random forest
