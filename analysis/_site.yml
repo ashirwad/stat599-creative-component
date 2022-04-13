@@ -7,10 +7,6 @@ navbar:
     href: index.html
   - text: About
     href: about.html
-  - text: Exploratory Data Analysis
-    href: detailed-eda.html
-  - text: Modeling Results
-    href: modeling.html
   - text: License
     href: license.html
   right:
