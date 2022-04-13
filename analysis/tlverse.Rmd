@@ -528,14 +528,65 @@ export(pdp_age_rsbp2, here("output", "rds-files", "pdp-age-rsbp.rds"))
 ```
 
 ## Local interpretation
+Find oldest and youngest patients in the training data:
+
+```{r train-old-young}
+train_oldest <- ist_train %>% slice_max(AGE, with_ties = FALSE)
+train_youngest <- ist_train %>% slice_min(AGE, with_ties = FALSE)
+```
 
 ### Random forest
 Compute SHAP attributions:
 
 ```{r local-rf}
-local_rf <- predict_parts(
-  explainer_rf, explainer_rf$data[1, ], type = "shap", B = 20
+local_old_rf <- predict_parts(
+  explainer_rf, train_oldest, type = "shap", B = 20
 )
+local_young_rf <- predict_parts(
+  explainer_rf, train_youngest, type = "shap", B = 20
+)
+```
+
+### Neural network
+Compute SHAP attributions:
+
+```{r local-nnet}
+local_old_nnet <- predict_parts(
+  explainer_nnet, train_oldest, type = "shap", B = 20
+)
+local_young_nnet <- predict_parts(
+  explainer_nnet, train_youngest, type = "shap", B = 20
+)
+```
+
+### XGBoost
+Compute SHAP attributions:
+
+```{r local-xgb}
+local_old_xgb <- predict_parts(
+  explainer_xgb, train_oldest, type = "shap", B = 20
+)
+local_young_xgb <- predict_parts(
+  explainer_xgb, train_youngest, type = "shap", B = 20
+)
+```
+
+Create local profile for the oldest patient in the training data:
+
+```{r local-profile-old}
+local_profile_old <- plot_local(
+  local_old_rf, local_old_nnet, local_old_xgb
+)
+local_profile_old
+```
+
+```{r local-profile-old2}
+local_profile_old2 <- ggplotly(local_profile_old)
+local_profile_old2
+```
+
+```{r export-local-profile-old2}
+export(local_profile_old2, here("output", "rds-files", "local-profile-old.rds"))
 ```
 
 Create a plot of SHAP attributions:
