@@ -72,3 +72,29 @@ plot_pdp <- function(...) {
     ggplot2::labs(x = NULL, y = "Average prediction", color = "Model") +
     ggpubr::theme_pubclean()
 }
+
+
+plot_local <- function(...) {
+  obj <- list(...)
+  df <- bind_rows(obj)
+
+  df2 <- df %>%
+    with_groups(
+      c(label, variable), ~ mutate(.x, mean_val = mean(contribution))
+    ) %>%
+    mutate(variable = fct_reorder(variable, abs(mean_val)))
+
+  df2 %>%
+    ggplot(aes(contribution, variable, fill = mean_val > 0)) +
+    geom_col(
+      data = ~ distinct(., label, variable, mean_val),
+      aes(mean_val, variable),
+      alpha = 0.5
+    ) +
+    geom_boxplot(width = 0.5) +
+    facet_wrap(vars(label), scales = "free") +
+    scale_fill_manual(values = colors_discrete_drwhy(2)) +
+    labs(y = NULL) +
+    ggpubr::theme_pubclean() +
+    theme(legend.position = "none")
+}
