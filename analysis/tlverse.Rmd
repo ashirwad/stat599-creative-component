@@ -34,6 +34,7 @@ conflict_prefer("export", "rio")
 library(ggpubr)
 library(plotly)
 conflict_prefer("layout", "plotly")
+library(patchwork)
 
 # Model building & evaluation
 library(tidymodels)
@@ -439,6 +440,54 @@ explainer_xgb <- explain_tidymodels(
 explainer_xgb
 ```
 
+## Residual diagnostics
+
+### Random forest
+Compute residuals:
+
+```{r resid-diag-rf}
+resid_diag_rf <- model_performance(explainer_rf)
+resid_diag_rf
+```
+
+### Neural network
+Compute residuals:
+
+```{r resid-diag-nnet}
+resid_diag_nnet <- model_performance(explainer_nnet)
+resid_diag_nnet
+```
+
+### XGBoost
+Compute residuals:
+
+```{r resid-diag-xgb}
+resid_diag_xgb <- model_performance(explainer_xgb)
+resid_diag_xgb
+```
+
+Create residual diagnostics plot:
+
+```{r resid-diag-plot}
+resid_diag_line <- plot(resid_diag_rf, resid_diag_nnet, resid_diag_xgb)
+resid_diag_box <- plot(
+  resid_diag_rf, resid_diag_nnet, resid_diag_xgb, geom = "boxplot"
+)
+
+resid_diag_plot <- resid_diag_box + resid_diag_line
+resid_diag_plot
+```
+
+```{r resid-diag-plot2}
+# TODO: Convert it into an interactive plot
+resid_diag_plot2 <- resid_diag_plot
+resid_diag_plot2
+```
+
+```{r export-resid-diag-plot2}
+export(resid_diag_plot2, here("output", "rds-files", "resid-diag-plot.rds"))
+```
+
 ## Variable importance
 
 ### Random forest
@@ -481,35 +530,111 @@ vip_plot2
 export(vip_plot2, here("output", "rds-files", "vip-plot.rds"))
 ```
 
+## Global interpretation
+
+### Random forest
+Create PDP for age and blood pressure using random forest explainer:
+
+```{r pdp-age-rsbp-rf}
+pdp_age_rf <- model_profile(explainer_rf, "AGE")
+pdp_rsbp_rf <- model_profile(explainer_rf, "RSBP")
+```
+
+### Neural network
+Create PDP for age and blood pressure using neural network explainer:
+
+```{r pdp-age-rsbp-nnet}
+pdp_age_nnet <- model_profile(explainer_nnet, "AGE")
+pdp_rsbp_nnet <- model_profile(explainer_nnet, "RSBP")
+```
+
+### XGBoost
+Create PDP for age and blood pressure using XGBoost explainer:
+
+```{r pdp-age-rsbp-xgb}
+pdp_age_xgb <- model_profile(explainer_xgb, "AGE")
+pdp_rsbp_xgb <- model_profile(explainer_xgb, "RSBP")
+```
+
+Create PDP profiles for age and blood pressure:
+
+```{r pdp-age-rsbp}
+pdp_age_rsbp <- plot_pdp(
+  pdp_age_rf, pdp_rsbp_rf, pdp_age_nnet, pdp_rsbp_nnet, pdp_age_xgb, 
+  pdp_rsbp_xgb
+)
+pdp_age_rsbp
+```
+
+```{r pdp-age-rsbp2}
+pdp_age_rsbp2 <- ggplotly(pdp_age_rsbp) %>%
+  layout(legend = list(orientation = "h", xanchor = "center", x = 0.5, y = 1))
+pdp_age_rsbp2
+```
+
+```{r export-pdp-age-rsbp2}
+export(pdp_age_rsbp2, here("output", "rds-files", "pdp-age-rsbp.rds"))
+```
+
 ## Local interpretation
+Find oldest and youngest patients in the training data:
+
+```{r train-old-young}
+train_oldest <- ist_train %>% slice_max(AGE, with_ties = FALSE)
+train_youngest <- ist_train %>% slice_min(AGE, with_ties = FALSE)
+```
 
 ### Random forest
 Compute SHAP attributions:
 
 ```{r local-rf}
-local_rf <- predict_parts(
-  explainer_rf, explainer_rf$data[1, ], type = "shap", B = 20
+local_old_rf <- predict_parts(
+  explainer_rf, train_oldest, type = "shap", B = 20
+)
+local_young_rf <- predict_parts(
+  explainer_rf, train_youngest, type = "shap", B = 20
 )
 ```
 
-Create a plot of SHAP attributions:
+### Neural network
+Compute SHAP attributions:
 
-```{r local-rf-plot}
-local_rf_plot <- local_rf %>%
-  with_groups(variable, ~ mutate(.x, mean_val = mean(contribution))) %>%
-  mutate(variable = fct_reorder(variable, abs(mean_val))) %>%
-  ggplot(aes(contribution, variable, fill = mean_val > 0)) +
-  geom_col(
-    data = ~ distinct(., variable, mean_val), 
-    aes(mean_val, variable), 
-    alpha = 0.5
-  ) +
-  geom_boxplot(width = 0.5) +
-  scale_fill_manual(values = colors_discrete_drwhy(2)) +
-  labs(y = NULL) + 
-  ggpubr::theme_pubclean() +
-  theme(legend.position = "none")
-local_rf_plot
+```{r local-nnet}
+local_old_nnet <- predict_parts(
+  explainer_nnet, train_oldest, type = "shap", B = 20
+)
+local_young_nnet <- predict_parts(
+  explainer_nnet, train_youngest, type = "shap", B = 20
+)
 ```
 
+### XGBoost
+Compute SHAP attributions:
+
+```{r local-xgb}
+local_old_xgb <- predict_parts(
+  explainer_xgb, train_oldest, type = "shap", B = 20
+)
+local_young_xgb <- predict_parts(
+  explainer_xgb, train_youngest, type = "shap", B = 20
+)
+```
+
+Create local profile for the oldest patient in the training data:
+
+```{r local-profile-old}
+local_profile_old <- plot_local(
+  local_old_rf, local_old_nnet, local_old_xgb
+)
+local_profile_old
+```
+
+```{r local-profile-old2}
+local_profile_old2 <- ggplotly(local_profile_old)
+local_profile_old2
+```
+
+```{r export-local-profile-old2}
+export(local_profile_old2, here("output", "rds-files", "local-profile-old.rds"))
+```
 
