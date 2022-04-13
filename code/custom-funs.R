@@ -58,3 +58,17 @@ plot_vip <- function(..., top_n = 10) {
     ggpubr::theme_pubclean() +
     ggplot2::theme(legend.position = "none")
 }
+
+# Create partial dependence profiles --------------------------------------
+plot_pdp <- function(...) {
+  obj <- list(...)
+  df <- purrr::map_dfr(obj, ~ pluck(.x, "agr_profiles")) %>% as_tibble()
+
+  df %>%
+    ggplot2::ggplot(aes(x = `_x_`, y = `_yhat_`, color = `_label_`)) +
+    ggplot2::geom_line(size = 1.2, alpha = 0.8) +
+    ggplot2::facet_wrap(vars(`_vname_`), scales = "free") +
+    ggplot2::scale_color_manual(values = DALEX::colors_discrete_drwhy(3)) +
+    ggplot2::labs(x = NULL, y = "Average prediction", color = "Model") +
+    ggpubr::theme_pubclean()
+}
