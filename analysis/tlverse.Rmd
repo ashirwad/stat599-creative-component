@@ -34,6 +34,7 @@ conflict_prefer("export", "rio")
 library(ggpubr)
 library(plotly)
 conflict_prefer("layout", "plotly")
+library(patchwork)
 
 # Model building & evaluation
 library(tidymodels)
@@ -437,6 +438,54 @@ explainer_xgb <- explain_tidymodels(
   label = "XGB"
 )
 explainer_xgb
+```
+
+## Residual diagnostics
+
+### Random forest
+Compute residuals:
+
+```{r resid-diag-rf}
+resid_diag_rf <- model_performance(explainer_rf)
+resid_diag_rf
+```
+
+### Neural network
+Compute residuals:
+
+```{r resid-diag-nnet}
+resid_diag_nnet <- model_performance(explainer_nnet)
+resid_diag_nnet
+```
+
+### XGBoost
+Compute residuals:
+
+```{r resid-diag-xgb}
+resid_diag_xgb <- model_performance(explainer_xgb)
+resid_diag_xgb
+```
+
+Create residual diagnostics plot:
+
+```{r resid-diag-plot}
+resid_diag_line <- plot(resid_diag_rf, resid_diag_nnet, resid_diag_xgb)
+resid_diag_box <- plot(
+  resid_diag_rf, resid_diag_nnet, resid_diag_xgb, geom = "boxplot"
+)
+
+resid_diag_plot <- resid_diag_box + resid_diag_line
+resid_diag_plot
+```
+
+```{r resid-diag-plot2}
+# TODO: Convert it into an interactive plot
+resid_diag_plot2 <- resid_diag_plot
+resid_diag_plot2
+```
+
+```{r export-resid-diag-plot2}
+export(resid_diag_plot2, here("output", "rds-files", "resid-diag-plot.rds"))
 ```
 
 ## Variable importance
