@@ -16,3 +16,7 @@ We performed EDA in two steps:
 
 - **Step 1**: [Preliminary EDA](https://public.tableau.com/app/profile/ashirwad.barnwal5453/viz/ist-corrected-eda/ISTEDA) using Tableau story
 - **Step 2**: [Detailed EDA](https://ashirwad.github.io/stat599-creative-component/detailed-eda.html) using `dlookr` R package
+
+# Model building, assessment, and interpretation
+
+We used `tidymodels` R ecosystem for model building and assessment, and `DALEX` R package for model interpretation. Model results can be located [here](https://ashirwad.github.io/stat599-creative-component/modeling.html)
